@@ -1,5 +1,5 @@
 const express = require('express');
-const connection = require('../../frontend/db/connection');
+const connection = require('../db/connection');
 const router = express.Router();
 
 // 모든 이벤트 가져오기
