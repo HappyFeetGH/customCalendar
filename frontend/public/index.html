@@ -1,14 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar App</title>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FullCalendar Test</title>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
+
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
-    <div id="calendar"></div>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
-    <script src="main.js"></script>
+  <div id="calendar"></div>
+
+
+  <!-- Modal -->
+    <div id="eventModal" class="modal" style="display:none;">
+        <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>이벤트 추가</h3>
+        <form id="eventForm">
+            <label>이벤트 제목:</label>
+            <input type="text" id="event-title" required><br>
+            <label>이벤트 설명:</label>
+            <textarea id="event-description"></textarea><br>
+            <label>시작 날짜 및 시간:</label>
+            <input type="datetime-local" id="event-start" required><br>
+            <label>종료 날짜 및 시간:</label>
+            <input type="datetime-local" id="event-end" required><br>
+            <label>태그:</label>
+            <select id="event-tag">
+            <option value="1">Meeting</option>
+            <option value="2">Workshop</option>
+            <!-- 태그 옵션 추가 -->
+            </select><br>
+            <label>반복:</label>
+            <select id="event-repeat">
+            <option value="none">반복 없음</option>
+            <option value="daily">매일</option>
+            <option value="weekly">매주</option>
+            <option value="monthly">매달</option>
+            </select><br>
+            <label>반복 횟수:</label>
+            <input type="number" id="repeat-count" min="1" value="1"><br>
+            <button type="submit">저장</button>
+        </form>
+        </div>
+    </div>
+  
+  <!-- Main JavaScript -->
+  <script src="./main.js"></script>
 </body>
 </html>

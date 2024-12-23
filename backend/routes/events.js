@@ -1,45 +1,54 @@
 const express = require('express');
-const connection = require('../db/connection');
 const router = express.Router();
+const connection = require('../db/connection');
 
-// 모든 이벤트 가져오기
-router.get('/', (req, res) => {
-  const sql = `SELECT * FROM Events`;
-  connection.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(200).json(results);
-  });
-});
+// 이벤트 저장 API
+router.post('/events', (req, res) => {
+    const { title, description, start, end, tag, repeat, repeatCount } = req.body;
 
-// 새로운 이벤트 추가
-router.post('/', (req, res) => {
-  const { title, description, start_datetime, end_datetime, tag_id, created_by } = req.body;
-  const sql = `INSERT INTO Events (title, description, start_datetime, end_datetime, tag_id, created_by) VALUES (?, ?, ?, ?, ?, ?)`;
-  connection.query(sql, [title, description, start_datetime, end_datetime, tag_id, created_by], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ id: results.insertId, ...req.body });
-  });
-});
+    // 기본 이벤트 저장
+    const insertEvent = `
+        INSERT INTO Events (title, description, start_datetime, end_datetime, tag_id, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    connection.query(insertEvent, [title, description, start, end, tag, 1], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ success: false, message: 'DB 저장 실패' });
+        }
 
-// 특정 이벤트 수정
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const { title, description, start_datetime, end_datetime, tag_id } = req.body;
-  const sql = `UPDATE Events SET title = ?, description = ?, start_datetime = ?, end_datetime = ?, tag_id = ? WHERE id = ?`;
-  connection.query(sql, [title, description, start_datetime, end_datetime, tag_id, id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(200).json({ message: 'Event updated successfully' });
-  });
-});
+        const eventId = result.insertId;
 
-// 특정 이벤트 삭제
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const sql = `DELETE FROM Events WHERE id = ?`;
-  connection.query(sql, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(200).json({ message: 'Event deleted successfully' });
-  });
+        // 반복 이벤트 저장
+        if (repeat !== 'none') {
+            const insertPeriods = `
+                INSERT INTO Periods (event_id, period)
+                VALUES (?, ?)
+            `;
+            const periods = [];
+            const startDate = new Date(start);
+            for (let i = 0; i < repeatCount; i++) {
+                if (repeat === 'daily') {
+                    startDate.setDate(startDate.getDate() + 1);
+                } else if (repeat === 'weekly') {
+                    startDate.setDate(startDate.getDate() + 7);
+                } else if (repeat === 'monthly') {
+                    startDate.setMonth(startDate.getMonth() + 1);
+                }
+                periods.push([eventId, startDate.toISOString()]);
+            }
+
+            connection.query(insertPeriods, [periods], (err) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ success: false, message: '반복 저장 실패' });
+                }
+                res.json({ success: true });
+            });
+        } else {
+            res.json({ success: true });
+        }
+    });
 });
 
 module.exports = router;
