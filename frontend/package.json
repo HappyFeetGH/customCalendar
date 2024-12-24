@@ -16,5 +16,6 @@
   },
   "devDependencies": {
     "lite-server": "^2.6.1"
-  }
+  },
+  "proxy": "http://localhost:5000"
 }

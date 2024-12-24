@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const repeatCount = document.getElementById('repeat-count').value;
 
         // 서버로 이벤트 데이터 전송
-        fetch('/api/events', {
+        fetch('http://localhost:5000/api/events', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -50,7 +50,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 repeat,
                 repeatCount
             })
-        }).then(response => response.json())
+        }).then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+          })
           .then(data => {
               if (data.success) {
                   alert('이벤트가 저장되었습니다!');
@@ -58,7 +61,10 @@ document.addEventListener('DOMContentLoaded', function () {
                   modal.style.display = 'none'; // 모달 닫기
               } else {
                   alert('저장에 실패했습니다.');
+                  console.error('Fetch Error:', error);
               }
           });
     });
 });
+
+
