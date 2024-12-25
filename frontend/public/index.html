@@ -55,6 +55,40 @@
         </div>
     </div>
   
+    <div id="eventDetailModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeEventModal()">&times;</span>
+        <h2>이벤트 상세</h2>
+        <form id="eventDetailForm">
+          <input type="hidden" id="eventId" name="id" />
+          <input type="hidden" id="eventTagId" name="tagId" />
+
+          <label for="eventTitle">제목:</label>
+          <input type="text" id="eventTitle" name="title" disabled />
+
+          <label for="eventDescription">설명:</label>
+          <textarea id="eventDescription" name="description" disabled></textarea>
+
+          <label for="eventStart">시작 날짜/시간:</label>
+          <input type="datetime-local" id="eventStart" name="start" disabled />
+
+          <label for="eventEnd">종료 날짜/시간:</label>
+          <input type="datetime-local" id="eventEnd" name="end" disabled />
+
+          <label for="eventTag">태그:</label>
+          <input type="text" id="eventTag" name="tag" disabled />
+            <!-- 태그 옵션 추가 -->
+          </select>
+    
+          <div class="modal-actions">
+            <button type="button" id="editButton" onclick="enableEditing()">수정</button>
+            <button type="button" id="saveButton" onclick="saveEditedEvent()" style="display: none;">저장</button>
+            <button type="button" onclick="deleteEvent()">삭제</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
   <!-- Main JavaScript -->
   <script src="./main.js"></script>
 </body>
