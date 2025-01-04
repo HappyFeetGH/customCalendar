@@ -298,16 +298,62 @@ router.post('/tags', (req, res) => {
     });
 });
 
-router.delete('/tags/:id(\\d+)', (req, res) => {
+// 태그 삭제 API
+router.delete('/tags/:id', (req, res) => {
     const { id } = req.params;
 
-    const deleteQuery = `DELETE FROM Tags WHERE id = ?`;
-    connection.query(deleteQuery, [id], (err) => {
+    const deleteTagQuery = `DELETE FROM Tags WHERE id = ?`;
+
+    connection.query(deleteTagQuery, [id], (err, result) => {
         if (err) {
             console.error('태그 삭제 실패:', err);
             return res.status(500).json({ success: false, message: '태그 삭제 실패' });
         }
-        res.json({ success: true });
+
+        /*
+        // 삭제 성공 시 관련 EventTags도 삭제
+        const deleteEventTagsQuery = `DELETE FROM EventTags WHERE tag_id = ?`;
+        connection.query(deleteEventTagsQuery, [id], (err) => {
+            if (err) {
+                console.error('관련 EventTags 삭제 실패:', err);
+                return res.status(500).json({ success: false, message: '관련 EventTags 삭제 실패' });
+            }
+
+            res.json({ success: true, message: '태그가 삭제되었습니다.' });
+        });
+        */
+    });
+});
+
+
+
+// 검색 API
+router.get('/search', (req, res) => {
+    const { query } = req.query;
+
+    if (!query) {
+        return res.status(400).json({ success: false, message: '검색어가 제공되지 않았습니다.' });
+    }
+
+    const searchQuery = `
+        SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime,
+               JSON_ARRAYAGG(t.name) AS tags
+        FROM Events e
+        LEFT JOIN EventTags et ON e.id = et.event_id
+        LEFT JOIN Tags t ON et.tag_id = t.id
+        WHERE e.title LIKE ? OR e.description LIKE ?
+        GROUP BY e.id
+    `;
+
+    const searchTerm = `%${query}%`;
+
+    connection.query(searchQuery, [searchTerm, searchTerm], (err, results) => {
+        if (err) {
+            console.error('검색 실패:', err);
+            return res.status(500).json({ success: false, message: '검색 실패' });
+        }
+
+        res.json({ success: true, events: results });
     });
 });
 

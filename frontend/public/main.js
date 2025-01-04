@@ -1,13 +1,35 @@
 let calendar;
 
 document.addEventListener('DOMContentLoaded', function () {
-    var selectedTags = []; // 선택된 태그 초기화
+    const selectedTags = []; // 선택된 태그 초기화
+
+    const calendarPage = document.getElementById('calendar-page');
+    const managerPage = document.getElementById('manager-page');
+    const navCalendar = document.getElementById('nav-calendar');
+    const navManager = document.getElementById('nav-manager');
+
+    // 페이지 전환 함수
+    function showPage(page) {
+        if (page === 'calendar') {
+            calendarPage.style.display = 'block';
+            managerPage.style.display = 'none';
+        } else if (page === 'manager') {
+            calendarPage.style.display = 'none';
+            managerPage.style.display = 'block';
+        }
+    }
+
+    // 네비게이션 버튼 클릭 이벤트
+    navCalendar.addEventListener('click', () => showPage('calendar'));
+    navManager.addEventListener('click', () => showPage('manager'));
+
+    // 기본 페이지는 캘린더
+    showPage('calendar');
 
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         selectable: true,
         dateClick: function (info) {
-            // 클릭한 날짜 기본값 설정
             document.getElementById('event-start').value = info.dateStr + 'T00:00';
             document.getElementById('event-end').value = info.dateStr + 'T01:00';
             document.getElementById('eventModal').style.display = 'block';
@@ -15,30 +37,21 @@ document.addEventListener('DOMContentLoaded', function () {
         events: async function (info, successCallback, failureCallback) {
             try {
                 const response = await fetch('http://localhost:5000/api/events');
-                if (!response.ok) {
-                    throw new Error('Failed to load events');
-                }
+                if (!response.ok) throw new Error('Failed to load events');
                 const events = await response.json();
                 
-                // 태그 필터링
                 const filteredEvents = selectedTags.length > 0
                     ? events.filter(event => event.tags.some(tag => selectedTags.includes(tag)))
                     : events;
-                
-                //console.log('Filtered Events:', filteredEvents);
-        
-                // 이벤트 포맷팅
+
                 const formattedEvents = filteredEvents.map(event => ({
-                    id: event.id,
+                    id: event.id.toString(),
                     title: event.title,
                     start: event.start_datetime,
                     end: event.end_datetime,
                     tags: event.tags
                 }));
-        
-                //console.log('Formatted Events:', formattedEvents);
-        
-                // 캘린더에 이벤트 추가
+
                 successCallback(formattedEvents);
             } catch (error) {
                 console.error('Error loading events:', error);
@@ -52,26 +65,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     calendar.render();
 
-    // 초기 이벤트 렌더링 (태그 필터링 없이)
-    calendar.refetchEvents();
+    // 태그 로드
+    loadTags();
+    
 
-    loadTags(); // 태그 로드
-
-    // 모달 닫기 버튼
-    const modal = document.getElementById('eventModal');
-    const closeButton = document.querySelector('.close');
-    closeButton.onclick = function () {
-        modal.style.display = 'none';
-    };
-
-    // 모달 외부 클릭 시 닫기
-    window.onclick = function (event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    };
-
-    // 폼 제출 이벤트
+    // 이벤트 추가 폼 제출 이벤트 리스너
     document.getElementById('eventForm').addEventListener('submit', function (e) {
         e.preventDefault(); // 기본 동작 막기
 
@@ -82,8 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const repeat = document.getElementById('event-repeat').value;
         const repeatCount = document.getElementById('repeat-count').value;
 
-        const selectedTags = Array.from(document.querySelectorAll('#eventTags input:checked')).map(cb => cb.value);
-        console.log('Selected Tags:', selectedTags);
+        const selectedTags = Array.from(document.querySelectorAll('#eventTags input:checked')).map(cb => cb.value);        
 
         // 서버로 이벤트 데이터 전송
         fetch('http://localhost:5000/api/events', {
@@ -105,14 +102,30 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 alert('이벤트가 저장되었습니다!');
                 calendar.refetchEvents(); // FullCalendar 새로고침
-                modal.style.display = 'none'; // 모달 닫기
+                document.getElementById('eventModal').style.display = 'none'; // 모달 닫기
             } else {
                 alert('저장에 실패했습니다.');
                 console.error('Fetch Error:', error);
             }
         });
     });
+
+    // 모달 닫기 버튼
+    document.querySelector('.close').onclick = function () {
+        document.getElementById('eventModal').style.display = 'none';
+    };
+
+    // 모달 외부 클릭 시 닫기
+    window.onclick = function (event) {
+        if (event.target === document.getElementById('eventModal')) {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+    };
+
+    loadTagManager();
+    loadTagsForManager();
 });
+
 
 
 function editEvent() {
@@ -380,7 +393,20 @@ function loadTags(eventId = null, selectedTags = []) {
         .catch(error => console.error('태그 로드 실패:', error));
 }
 
-
+function loadTagManager() {
+    fetch('http://localhost:5000/api/events/tags')
+        .then(response => response.json())
+        .then(tags => {
+            const tagList = document.getElementById('tagList');
+            tagList.innerHTML = ''; // 기존 태그 제거
+            tags.forEach(tag => {
+                const li = document.createElement('li');
+                li.textContent = tag.name;
+                tagList.appendChild(li);
+            });
+        })
+        .catch(error => console.error('태그 로드 실패:', error));
+}
 
 // 태그 추가
 function addTag(name) {
@@ -423,6 +449,7 @@ function filterEventsByTags() {
     const currentEventSources = calendar.getEventSources();
     currentEventSources.forEach(source => source.remove());
 
+    
     // 새로운 이벤트 필터링
     fetch('http://localhost:5000/api/events')
         .then(response => {
@@ -446,12 +473,132 @@ function filterEventsByTags() {
                 end: new Date(event.end_datetime).toISOString(),
                 tags: event.tags || []
             }));
-
-            // 필터링된 이벤트 추가 및 렌더링
+            
             calendar.addEventSource(formattedFilteredEvents);
             calendar.refetchEvents();
         })
         .catch(error => console.error('이벤트 필터링 실패:', error));
+        
 }
 
 
+// 태그 관리용 태그 로드
+function loadTagsForManager() {
+    fetch('http://localhost:5000/api/events/tags', { method: 'GET' })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(tags => {
+            const tagList = document.getElementById('tagList');
+            tagList.innerHTML = ''; // 기존 태그 목록 초기화
+
+            tags.forEach(tag => {
+                const container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.marginBottom = '8px';
+
+                // Checkbox 생성
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = tag.name;
+                checkbox.id = `tag-${tag.id}`;
+                checkbox.name = 'tags';
+
+                // Label 생성
+                const label = document.createElement('label');
+                label.htmlFor = `tag-${tag.id}`;
+                label.textContent = tag.name;
+                label.style.marginLeft = '10px';
+
+                // 삭제 버튼 생성
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '삭제';
+                deleteButton.style.marginLeft = 'auto';
+                deleteButton.style.backgroundColor = '#ff4d4d';
+                deleteButton.style.color = '#fff';
+                deleteButton.style.border = 'none';
+                deleteButton.style.padding = '5px 10px';
+                deleteButton.style.cursor = 'pointer';
+                deleteButton.style.borderRadius = '5px';
+
+                deleteButton.onclick = () => deleteTag(tag.id);
+
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                container.appendChild(deleteButton);
+                tagList.appendChild(container);
+            });
+        })
+        .catch(error => console.error('태그 로드 실패:', error));
+}
+
+function deleteTag(tagId) {
+    if (!confirm('태그를 삭제하시겠습니까?')) return;
+
+    fetch(`http://localhost:5000/api/events/tags/${tagId}`, { method: 'DELETE' })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('태그가 삭제되었습니다.');
+                loadTags(); // 태그 목록 갱신
+            } else {
+                alert('태그 삭제에 실패했습니다.');
+            }
+        })
+        .catch(error => console.error('태그 삭제 중 에러 발생:', error));
+}
+
+document.getElementById('searchButton').addEventListener('click', function () {
+    const query = document.getElementById('searchInput').value.trim();
+    const selectedTags = Array.from(document.querySelectorAll('#tagFilter input[type="checkbox"]:checked'))
+    .map(checkbox => checkbox.value);
+
+    fetch('http://localhost:5000/api/events')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(events => {
+            // 필터링 로직
+            const filteredEvents = events.filter(event => {
+                const matchesQuery = query ? event.title.includes(query) || event.description.includes(query) : true;
+                const matchesTags = selectedTags.length > 0
+                    ? event.tags.some(tag => selectedTags.includes(tag))
+                    : true;
+
+                return matchesQuery && matchesTags;
+            });
+
+            // FullCalendar 형식으로 변환
+            const formattedEvents = filteredEvents.map(event => ({
+                id: event.id.toString(),
+                title: event.title,
+                start: new Date(event.start_datetime).toISOString(),
+                end: new Date(event.end_datetime).toISOString(),
+                tags: event.tags || []
+            }));
+
+            // 기존 이벤트 제거 및 필터링된 이벤트 추가
+            calendar.getEvents().forEach(event => event.remove());
+            calendar.addEventSource(formattedEvents);
+            calendar.refetchEvents();
+        })
+        .catch(error => console.error('이벤트 필터링 실패:', error));
+});
+
+document.getElementById('resetButton').addEventListener('click', function () {
+    document.getElementById('searchInput').value = ''; // 검색어 초기화
+    //calendar.refetchEvents(); // 모든 이벤트 다시 로드
+    filterEventsByTags(); // 태그 필터 유지하며 다시 로드
+});

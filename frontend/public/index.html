@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FullCalendar Test</title>
+  <title>Calendar and Manager</title>
 
-    <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
 
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
@@ -18,89 +18,94 @@
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
-  <div id="tagManager">
-    <h2>태그 관리</h2>
-    <ul id="tagList"></ul>
-    <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요" />
-    <button onclick="addTag(document.getElementById('tagNameInput').value)">추가</button>
-  </div>
+  <!-- Navigation -->
+  <nav>
+    <button id="nav-calendar">캘린더</button>
+    <button id="nav-manager">태그 관리</button>
+  </nav>
 
-  <div id="tagFilter">
-    <!-- 태그 필터 체크박스가 이곳에 동적으로 추가됩니다 -->
-    <h4>태그 필터</h4>
+  <div id="searchBar" style="margin-bottom: 20px;">
+    <input type="text" id="searchInput" placeholder="검색어를 입력하세요" />
+    <button id="searchButton">검색</button>
+    <button id="resetButton">리셋</button>
   </div>
-
   
-  <div id="calendar"></div>
+  <!-- Calendar Page -->
+  <div id="calendar-page" class="page">
+    <h1>캘린더</h1>
+    <div id="tagFilter">
+      <h4>태그 필터</h4>
+    </div>
+    <div id="calendar"></div>
+  </div>
 
+  <!-- Tag Manager Page -->
+  <div id="manager-page" class="page" style="display: none;">
+    <h1>태그 관리</h1>
+    <div id="tagManager">
+      <div id="tagList"></div>
+      <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요">
+      <button onclick="addTag(document.getElementById('tagNameInput').value)">추가</button>
+    </div>
+  </div>
 
   <!-- Modal -->
-    <div id="eventModal" class="modal" style="display:none;">
-        <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3>이벤트 추가</h3>
-        <form id="eventForm">
-            <label>이벤트 제목:</label>
-            <input type="text" id="event-title" required><br>
-            <label>이벤트 설명:</label>
-            <textarea id="event-description"></textarea><br>
-            <label>시작 날짜 및 시간:</label>
-            <input type="datetime-local" id="event-start" required><br>
-            <label>종료 날짜 및 시간:</label>
-            <input type="datetime-local" id="event-end" required><br>
-            <label for="eventTags">태그:</label>
-            <div id="eventTags"></div>            
-            <br>
-            <label>반복:</label>
-            <select id="event-repeat">
-            <option value="none">반복 없음</option>
-            <option value="daily">매일</option>
-            <option value="weekly">매주</option>
-            <option value="monthly">매달</option>
-            </select><br>
-            <label>반복 횟수:</label>
-            <input type="number" id="repeat-count" min="1" value="1"><br>
-            <button type="submit">저장</button>
-        </form>
+  <div id="eventModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>이벤트 추가</h3>
+      <form id="eventForm">
+        <label>이벤트 제목:</label>
+        <input type="text" id="event-title" required><br>
+        <label>이벤트 설명:</label>
+        <textarea id="event-description"></textarea><br>
+        <label>시작 날짜 및 시간:</label>
+        <input type="datetime-local" id="event-start" required><br>
+        <label>종료 날짜 및 시간:</label>
+        <input type="datetime-local" id="event-end" required><br>
+        <label>태그:</label>
+        <div id="eventTags"></div><br>
+        <label>반복:</label>
+        <select id="event-repeat">
+          <option value="none">반복 없음</option>
+          <option value="daily">매일</option>
+          <option value="weekly">매주</option>
+          <option value="monthly">매달</option>
+        </select><br>
+        <label>반복 횟수:</label>
+        <input type="number" id="repeat-count" min="1" value="1"><br>
+        <button type="submit">저장</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="eventDetailModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeEventModal()">&times;</span>
+      <h2>이벤트 상세</h2>
+      <form id="eventDetailForm">
+        <input type="hidden" id="eventId" name="id" />
+        <input type="hidden" id="eventTagId" name="tagId" />
+
+        <label for="eventTitle">제목:</label>
+        <input type="text" id="eventTitle" name="title" disabled />
+        <label for="eventDescription">설명:</label>
+        <textarea id="eventDescription" name="description" disabled></textarea>
+        <label for="eventStart">시작 날짜/시간:</label>
+        <input type="datetime-local" id="eventStart" name="start" disabled />
+        <label for="eventEnd">종료 날짜/시간:</label>
+        <input type="datetime-local" id="eventEnd" name="end" disabled />
+        <label>태그:</label>
+        <div id="eventTagsDetail"></div>
+        <div class="modal-actions">
+          <button type="button" id="editButton" onclick="enableEditing()">수정</button>
+          <button type="button" id="saveButton" onclick="saveEditedEvent()" style="display: none;">저장</button>
+          <button type="button" onclick="deleteEvent()">삭제</button>
         </div>
+      </form>
     </div>
-  
-    <div id="eventDetailModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeEventModal()">&times;</span>
-        <h2>이벤트 상세</h2>
-        <form id="eventDetailForm">
-          <input type="hidden" id="eventId" name="id" />
-          <input type="hidden" id="eventTagId" name="tagId" />
+  </div>
 
-          <label for="eventTitle">제목:</label>
-          <input type="text" id="eventTitle" name="title" disabled />
-
-          <label for="eventDescription">설명:</label>
-          <textarea id="eventDescription" name="description" disabled></textarea>
-
-          <label for="eventStart">시작 날짜/시간:</label>
-          <input type="datetime-local" id="eventStart" name="start" disabled />
-
-          <label for="eventEnd">종료 날짜/시간:</label>
-          <input type="datetime-local" id="eventEnd" name="end" disabled />
-
-          <label for="eventTagsDetail">태그:</label>
-          <div id="eventTagsDetail">
-            <!-- 태그 체크박스가 여기에 추가됩니다 -->
-          </div>
-    
-          <div class="modal-actions">
-            <button type="button" id="editButton" onclick="enableEditing()">수정</button>
-            <button type="button" id="saveButton" onclick="saveEditedEvent()" style="display: none;">저장</button>
-            <button type="button" onclick="deleteEvent()">삭제</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    
-    
   <!-- Main JavaScript -->
   <script src="./main.js"></script>
 </body>
