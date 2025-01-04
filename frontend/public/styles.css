@@ -1,43 +1,140 @@
-/* 기본 모달 스타일 */
+/* 모달 배경 */
 .modal {
-  display: none; /* 기본적으로 숨김 */
+  display: none;
   position: fixed;
-  z-index: 1050; /* 캘린더 위에 표시되도록 설정 */
-  padding-top: 100px;
+  z-index: 1000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4); /* 반투명 배경 */
+  background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 */
+  backdrop-filter: blur(10px); /* 배경 흐림 */
 }
 
-/* 모달 내용 */
+/* 모달 콘텐츠 */
 .modal-content {
+  position: relative; /* 닫기 버튼의 위치 조정을 위해 relative */
   background-color: #fff;
-  margin: auto;
+  margin: 5% auto; /* 화면 가운데 정렬 */
   padding: 20px;
-  border: 1px solid #888;
-  width: 80%;
-  z-index: 1060; /* 추가로 높은 값 */
+  border-radius: 16px;
+  width: 90%; /* 기본 너비 */
+  max-width: 500px; /* 최대 너비 */
+  min-height: 300px; /* 최소 높이 설정 */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-/* 닫기 버튼 */
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
+
+/* 모달 나타나는 애니메이션 */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: scale(0.9);
+  }
+  to {
+      opacity: 1;
+      transform: scale(1);
+  }
+}
+/* 모달 헤더 */
+.modal-content h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+/* 입력 필드 */
+.modal-content input[type="text"],
+.modal-content input[type="datetime-local"],
+.modal-content textarea,
+.modal-content select {
+    width: 100%; /* 모달의 가로 길이에 맞춤 */
+    box-sizing: border-box; /* padding과 border를 포함한 크기 계산 */
+    margin-bottom: 15px; /* 아래 요소와 간격 */
+    padding: 10px;
+    border: 1px solid #ddd; /* 기본 테두리 */
+    border-radius: 8px; /* 둥근 모서리 */
+    font-size: 16px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    transition: border-color 0.3s ease;
+}
+
+/* 입력 필드 포커스 */
+.modal-content input[type="text"]:focus,
+.modal-content input[type="datetime-local"]:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+    border-color: #007aff; /* 포커스 시 파란 테두리 */
+    outline: none;
+}
+
+
+
+/* 버튼 */
+.modal-content button {
+  width: 100%;
+  padding: 12px 20px;
+  margin-top: 20px;
+  font-size: 14px;
   font-weight: bold;
+  color: #fff;
+  background-color: #007aff; /* Apple Blue */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
+.modal-content button:hover {
+  background-color: #005bb5; /* 어두운 블루 */
 }
+
+/* 닫기 버튼 스타일 */
+.modal-content .close {
+  position: absolute;
+  top: 15px; /* 모달 상단에서의 위치 */
+  right: 20px; /* 모달 오른쪽에서의 위치 */
+  font-size: 24px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  z-index: 1000; /* 다른 요소 위에 표시되도록 */
+  transition: color 0.3s ease;
+}
+
+.modal-content .close:hover {
+  color: #000; /* 호버 시 검정색 */
+}
+
 
 /* 캘린더 스타일 조정 (예시) */
 .fc {
   z-index: 1000; /* 모달보다 낮은 레이어로 설정 */
+}
+
+
+/* 태그 필터를 가로로 정렬 */
+#tagFilter {
+  display: flex;
+  flex-wrap: wrap; /* 태그가 화면 너비를 넘으면 줄바꿈 */
+  gap: 10px; /* 태그 간 간격 */
+}
+
+/* 각 태그(체크박스와 레이블) 스타일링 */
+#tagFilter div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 체크박스 스타일 */
+#tagFilter input[type="checkbox"] {
+  margin: 0;
 }

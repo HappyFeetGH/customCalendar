@@ -2,62 +2,83 @@ const express = require('express');
 const router = express.Router();
 const connection = require('../db/connection');
 
+
 // 이벤트 저장 API
 router.post('/', (req, res) => {
-    const { title, description, start, end, tag, repeat, repeatCount } = req.body;
-
+    const { title, description, start, end, tags, repeat, repeatCount } = req.body;
+    
     if (!title || !start || !end) {
         return res.status(400).json({ success: false, message: '필수 필드가 누락되었습니다.' });
     }
 
     // 태그 확인 또는 생성
-    const checkTagQuery = `SELECT id FROM Tags WHERE name = ?`;
-    connection.query(checkTagQuery, [tag], (err, results) => {
-        if (err) {
-            console.error('태그 조회 실패:', err);
-            return res.status(500).json({ success: false, message: '태그 확인 실패' });
-        }
+    const tagPromises = tags.map(tagName => {
+        return new Promise((resolve, reject) => {
+            if (!tagName || typeof tagName !== 'string' || tagName.trim() === '') {
+                return reject(new Error('유효하지 않은 태그 이름'));
+            }
 
-        if (results.length > 0) {
-            saveEvent(results[0].id);
-        } else {
-            // 태그가 없으면 새로 생성
-            const insertTagQuery = `INSERT INTO Tags (name) VALUES (?)`;
-            connection.query(insertTagQuery, [tag], (err, result) => {
-                if (err) {
-                    console.error('태그 생성 실패:', err);
-                    return res.status(500).json({ success: false, message: '태그 생성 실패' });
-                } 
-                saveEvent(result.insertId);
+            const checkTagQuery = `SELECT id FROM Tags WHERE name = ?`;
+            connection.query(checkTagQuery, [tagName.trim()], (err, results) => {
+                if (err) return reject(err);
+
+                if (results.length > 0) {
+                    resolve(results[0].id); // 기존 태그 ID 반환
+                } else {
+                    const insertTagQuery = `INSERT INTO Tags (name, color) VALUES (?, ?)`;
+                    connection.query(insertTagQuery, [tagName.trim(), '#FFFFFF'], (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result.insertId); // 새로 생성된 태그 ID 반환
+                    });
+                }
             });
-        }
+        });
     });
 
+    // 모든 태그 처리 완료 후 이벤트 저장
+    Promise.all(tagPromises)
+        .then(tagIds => saveEvent(tagIds)) // 태그 ID 배열을 전달
+        .catch(err => {
+            console.error('태그 처리 실패:', err);
+            res.status(500).json({ success: false, message: '태그 처리 실패' });
+        });
+
     // 이벤트 저장 로직
-    function saveEvent(tagId) {
+    function saveEvent(tagIds) {
         const insertEventQuery = `
-            INSERT INTO Events (title, description, start_datetime, end_datetime, tag_id, created_by)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO Events (title, description, start_datetime, end_datetime, created_by)
+            VALUES (?, ?, ?, ?, ?)
         `;
 
         let currentDate = new Date(start);
         let currentEndDate = new Date(end);
 
-        const promises = []; // 모든 반복 저장 작업을 Promise로 관리
+        const promises = [];
 
         for (let i = 0; i < repeatCount; i++) {
             const eventStart = new Date(currentDate);
             const eventEnd = new Date(currentEndDate);
 
             const promise = new Promise((resolve, reject) => {
-                connection.query(insertEventQuery, [title, description, eventStart, eventEnd, tagId, 1], (err, result) => {
+                connection.query(insertEventQuery, [title, description, eventStart, eventEnd, 1], (err, result) => {
                     if (err) {
                         console.error('이벤트 저장 실패:', err);
-                        reject(err);
-                    } else {
-                        console.log(`Event 저장 성공 - 반복 ${i + 1}:`, result.insertId);
-                        resolve(result.insertId);
+                        return reject(err);
                     }
+
+                    const eventId = result.insertId;
+
+                    // EventTags 테이블에 태그 저장
+                    const insertEventTagsQuery = `INSERT INTO EventTags (event_id, tag_id) VALUES ?`;
+                    const eventTagsData = tagIds.map(tagId => [eventId, tagId]);
+
+                    connection.query(insertEventTagsQuery, [eventTagsData], (err) => {
+                        if (err) {
+                            console.error('EventTags 저장 실패:', err);
+                            return reject(err);
+                        }
+                        resolve(eventId);
+                    });
                 });
             });
 
@@ -79,71 +100,159 @@ router.post('/', (req, res) => {
         // 모든 저장이 완료되면 응답
         Promise.all(promises)
             .then(() => res.json({ success: true }))
-            .catch((err) => {
+            .catch(err => {
                 console.error('반복 저장 중 오류 발생:', err);
                 res.status(500).json({ success: false, message: '반복 저장 중 오류 발생' });
             });
     }
-    
 });
+
 
 // 이벤트 로드 API
 router.get('/', (req, res) => {
     const query = `
-        SELECT e.id, e.title, e.description, e.start_datetime AS start, e.end_datetime AS end, t.name AS tag
+        SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime, e.created_by, 
+               JSON_ARRAYAGG(t.name) AS tags
         FROM Events e
-        LEFT JOIN Tags t ON e.tag_id = t.id
+        LEFT JOIN EventTags et ON e.id = et.event_id
+        LEFT JOIN Tags t ON et.tag_id = t.id
+        GROUP BY e.id
     `;
+
     connection.query(query, (err, results) => {
         if (err) {
-            console.error('이벤트 로드 실패:', err);
-            return res.status(500).json({ success: false, message: '이벤트 로드 실패' });
+            console.error('이벤트 데이터 로드 실패:', err);
+            return res.status(500).json({ success: false, message: '이벤트 데이터 로드 실패' });
         }
         res.json(results);
     });
 });
 
-// 이벤트 수정 API
-router.put('/:id', (req, res) => {
+
+router.put('/:id(\\d+)', (req, res) => {
     const { id } = req.params;
-    const { title, description, start, end, tag } = req.body;
+    const { title, description, start, end, tags } = req.body; // 태그 목록
 
-    console.log('PUT 요청 수신:', req.params.id, req.body);
-
-    const updateQuery = `
+    // 1. 이벤트 기본 정보 업데이트
+    const updateEventQuery = `
         UPDATE Events 
-        SET title = ?, description = ?, start_datetime = ?, end_datetime = ?, tag_id = ?
+        SET title = ?, description = ?, start_datetime = ?, end_datetime = ?
         WHERE id = ?
     `;
 
-    connection.query(updateQuery, [title, description, start, end, tag, id], (err) => {
+    connection.query(updateEventQuery, [title, description, start, end, id], (err) => {
         if (err) {
             console.error('이벤트 수정 실패:', err);
             return res.status(500).json({ success: false, message: '이벤트 수정 실패' });
         }
-        res.json({ success: true });
+
+        // 2. 기존 태그 삭제
+        const deleteTagsQuery = `
+            DELETE FROM EventTags WHERE event_id = ?
+        `;
+
+        connection.query(deleteTagsQuery, [id], (err) => {
+            if (err) {
+                console.error('기존 태그 삭제 실패:', err);
+                return res.status(500).json({ success: false, message: '태그 업데이트 실패' });
+            }
+
+            // 3. 새로운 태그 추가
+            if (tags && tags.length > 0) {
+                // 태그 이름을 ID로 변환
+                const tagPromises = tags.map(tagName => {
+                    return new Promise((resolve, reject) => {
+                        const query = `SELECT id FROM Tags WHERE name = ?`;
+                        connection.query(query, [tagName], (err, results) => {
+                            if (err) return reject(err);
+                            if (results.length > 0) {
+                                resolve(results[0].id); // 기존 태그 ID 반환
+                            } else {
+                                // 태그가 없으면 새로 생성
+                                const insertTagQuery = `INSERT INTO Tags (name) VALUES (?)`;
+                                connection.query(insertTagQuery, [tagName], (err, result) => {
+                                    if (err) return reject(err);
+                                    resolve(result.insertId); // 새로 생성된 태그 ID 반환
+                                });
+                            }
+                        });
+                    });
+                });
+
+                // 모든 태그 처리 후 EventTags에 삽입
+                Promise.all(tagPromises)
+                    .then(tagIds => {
+                        const insertTagsQuery = `
+                            INSERT INTO EventTags (event_id, tag_id)
+                            VALUES ?
+                        `;
+                        const values = tagIds.map(tagId => [id, tagId]);
+
+                        connection.query(insertTagsQuery, [values], (err) => {
+                            if (err) {
+                                console.error('태그 추가 실패:', err);
+                                return res.status(500).json({ success: false, message: '태그 추가 실패' });
+                            }
+
+                            res.json({ success: true });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('태그 처리 중 실패:', err);
+                        res.status(500).json({ success: false, message: '태그 처리 실패' });
+                    });
+            } else {
+                // 태그가 없으면 그냥 성공 응답
+                res.json({ success: true });
+            }
+        });
     });
 });
+
 
 // 이벤트 삭제 API
-router.delete('/:id', (req, res) => {
+router.delete('/:id(\\d+)', (req, res) => {
     const { id } = req.params;
 
-    const deleteQuery = `DELETE FROM Events WHERE id = ?`;
+    // 1. EventTags에서 해당 이벤트와 관련된 태그 삭제
+    const deleteEventTagsQuery = `DELETE FROM EventTags WHERE event_id = ?`;
 
-    connection.query(deleteQuery, [id], (err) => {
+    connection.query(deleteEventTagsQuery, [id], (err) => {
         if (err) {
-            console.error('이벤트 삭제 실패:', err);
-            return res.status(500).json({ success: false, message: '이벤트 삭제 실패' });
+            console.error('EventTags 삭제 실패:', err);
+            return res.status(500).json({ success: false, message: '태그 삭제 실패' });
         }
-        res.json({ success: true });
+
+        // 2. Events 테이블에서 이벤트 삭제
+        const deleteEventQuery = `DELETE FROM Events WHERE id = ?`;
+
+        connection.query(deleteEventQuery, [id], (err) => {
+            if (err) {
+                console.error('이벤트 삭제 실패:', err);
+                return res.status(500).json({ success: false, message: '이벤트 삭제 실패' });
+            }
+            res.json({ success: true });
+        });
     });
 });
 
 
-router.get('/:id', (req, res) => {
+
+router.get('/:id(\\d+)', (req, res) => {
     const { id } = req.params;
-    const selectQuery = `SELECT * FROM Events WHERE id = ?`;
+    const selectQuery = `
+        SELECT 
+            e.*, 
+            GROUP_CONCAT(et.tag_id) AS tags
+        FROM 
+            Events e
+        LEFT JOIN 
+            EventTags et ON e.id = et.event_id
+        WHERE 
+            e.id = ?
+        GROUP BY 
+            e.id
+    `;
 
     connection.query(selectQuery, [id], (err, results) => {
         if (err) {
@@ -156,8 +265,49 @@ router.get('/:id', (req, res) => {
             return res.status(404).json({ success: false, message: '이벤트를 찾을 수 없습니다.' });
         }
 
-        //console.log('이벤트 데이터:', results[0]);
-        res.json(results[0]);
+        // 태그 ID 문자열을 배열로 변환
+        const event = results[0];
+        event.tags = event.tags ? event.tags.split(',').map(Number) : [];
+
+        res.json(event);
+    });
+});
+
+
+router.get('/tags', (req, res) => {    
+    const query = `SELECT * FROM Tags`;
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('태그 조회 실패:', err);
+            return res.status(500).json({ success: false });
+        }
+        res.json(results);
+    });
+});
+
+
+router.post('/tags', (req, res) => {
+    const { name } = req.body;
+    const query = `INSERT INTO Tags (name) VALUES (?)`;
+    connection.query(query, [name], (err) => {
+        if (err) {
+            console.error('태그 추가 실패:', err);
+            return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+    });
+});
+
+router.delete('/tags/:id(\\d+)', (req, res) => {
+    const { id } = req.params;
+
+    const deleteQuery = `DELETE FROM Tags WHERE id = ?`;
+    connection.query(deleteQuery, [id], (err) => {
+        if (err) {
+            console.error('태그 삭제 실패:', err);
+            return res.status(500).json({ success: false, message: '태그 삭제 실패' });
+        }
+        res.json({ success: true });
     });
 });
 

@@ -18,6 +18,19 @@
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
+  <div id="tagManager">
+    <h2>태그 관리</h2>
+    <ul id="tagList"></ul>
+    <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요" />
+    <button onclick="addTag(document.getElementById('tagNameInput').value)">추가</button>
+  </div>
+
+  <div id="tagFilter">
+    <!-- 태그 필터 체크박스가 이곳에 동적으로 추가됩니다 -->
+    <h4>태그 필터</h4>
+  </div>
+
+  
   <div id="calendar"></div>
 
 
@@ -35,12 +48,9 @@
             <input type="datetime-local" id="event-start" required><br>
             <label>종료 날짜 및 시간:</label>
             <input type="datetime-local" id="event-end" required><br>
-            <label>태그:</label>
-            <select id="event-tag">
-            <option value="1">Meeting</option>
-            <option value="2">Workshop</option>
-            <!-- 태그 옵션 추가 -->
-            </select><br>
+            <label for="eventTags">태그:</label>
+            <div id="eventTags"></div>            
+            <br>
             <label>반복:</label>
             <select id="event-repeat">
             <option value="none">반복 없음</option>
@@ -75,10 +85,10 @@
           <label for="eventEnd">종료 날짜/시간:</label>
           <input type="datetime-local" id="eventEnd" name="end" disabled />
 
-          <label for="eventTag">태그:</label>
-          <input type="text" id="eventTag" name="tag" disabled />
-            <!-- 태그 옵션 추가 -->
-          </select>
+          <label for="eventTagsDetail">태그:</label>
+          <div id="eventTagsDetail">
+            <!-- 태그 체크박스가 여기에 추가됩니다 -->
+          </div>
     
           <div class="modal-actions">
             <button type="button" id="editButton" onclick="enableEditing()">수정</button>
@@ -88,6 +98,8 @@
         </form>
       </div>
     </div>
+
+    
     
   <!-- Main JavaScript -->
   <script src="./main.js"></script>
