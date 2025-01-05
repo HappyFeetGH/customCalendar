@@ -1,3 +1,5 @@
+const API_BASE_URL = "http://localhost:5000"
+
 let calendar;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         events: async function (info, successCallback, failureCallback) {
             try {
-                const response = await fetch('http://localhost:5000/api/events');
+                const response = await fetch(`${API_BASE_URL}/api/events`);
                 if (!response.ok) throw new Error('Failed to load events');
                 const events = await response.json();
                 
@@ -83,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedTags = Array.from(document.querySelectorAll('#eventTags input:checked')).map(cb => cb.value);        
 
         // 서버로 이벤트 데이터 전송
-        fetch('http://localhost:5000/api/events', {
+        fetch(`${API_BASE_URL}/api/events`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -140,7 +142,7 @@ function editEvent() {
 
     const updatedEvent = { title, description, start, end, tags: selectedTags };
 
-    fetch(`http://localhost:5000/api/events/${eventId}`, {
+    fetch(`${API_BASE_URL}/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -174,7 +176,7 @@ function editEvent() {
 function deleteEvent() {
     const eventId = document.getElementById('eventId').value;
 
-    fetch(`http://localhost:5000/api/events/${eventId}`, {
+    fetch(`${API_BASE_URL}/api/events/${eventId}`, {
         method: 'DELETE',
     })
         .then(response => {
@@ -201,7 +203,7 @@ function openEventModal(event) {
     const eventId = event.id;
 
     // 백엔드에서 이벤트 데이터 가져오기
-    fetch(`http://localhost:5000/api/events/${eventId}`)
+    fetch(`${API_BASE_URL}/api/events/${eventId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -277,7 +279,7 @@ function saveEditedEvent() {
     const selectedTags = Array.from(document.querySelectorAll('#eventTagsDetail input:checked')).map(cb => cb.value);
 
     // PUT 요청으로 수정된 데이터를 전송
-    fetch(`http://localhost:5000/api/events/${eventId}`, {
+    fetch(`${API_BASE_URL}/api/events/${eventId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -310,7 +312,7 @@ function saveEditedEvent() {
 
 // 태그 목록 로드
 function loadTags(eventId = null, selectedTags = []) {
-    fetch('http://localhost:5000/api/events/tags', {
+    fetch(`${API_BASE_URL}/api/events/tags`, {
         method: 'GET'
     })
         .then(response => {
@@ -394,7 +396,7 @@ function loadTags(eventId = null, selectedTags = []) {
 }
 
 function loadTagManager() {
-    fetch('http://localhost:5000/api/events/tags')
+    fetch(`${API_BASE_URL}/api/events/tags`)
         .then(response => response.json())
         .then(tags => {
             const tagList = document.getElementById('tagList');
@@ -416,7 +418,7 @@ function addTag(name) {
         return;
     }
 
-    fetch('http://localhost:5000/api/events/tags', {
+    fetch(`${API_BASE_URL}/api/events/tags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -451,7 +453,7 @@ function filterEventsByTags() {
 
     
     // 새로운 이벤트 필터링
-    fetch('http://localhost:5000/api/events')
+    fetch(`${API_BASE_URL}/api/events`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -484,7 +486,7 @@ function filterEventsByTags() {
 
 // 태그 관리용 태그 로드
 function loadTagsForManager() {
-    fetch('http://localhost:5000/api/events/tags', { method: 'GET' })
+    fetch(`${API_BASE_URL}/api/events/tags`, { method: 'GET' })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -539,7 +541,7 @@ function loadTagsForManager() {
 function deleteTag(tagId) {
     if (!confirm('태그를 삭제하시겠습니까?')) return;
 
-    fetch(`http://localhost:5000/api/events/tags/${tagId}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, { method: 'DELETE' })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -562,7 +564,7 @@ document.getElementById('searchButton').addEventListener('click', function () {
     const selectedTags = Array.from(document.querySelectorAll('#tagFilter input[type="checkbox"]:checked'))
     .map(checkbox => checkbox.value);
 
-    fetch('http://localhost:5000/api/events')
+    fetch(`${API_BASE_URL}/api/events`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
