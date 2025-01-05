@@ -3,11 +3,11 @@ const cors = require('cors');
 
 const app = express();
 
-const API_BASE_URL = "http://localhost";
+const API_BASE_URL = "http://144.24.69.30";
 
 // CORS 설정 (모든 출처 허용)
 app.use(cors({
-  origin: `${API_BASE_URL}:3000`,
+  origin: `${API_BASE_URL}:3036`,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
   allowedHeaders: ["Content-Type"]
