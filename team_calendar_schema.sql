@@ -16,6 +16,23 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `EventTags`
+--
+
+DROP TABLE IF EXISTS `EventTags`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `EventTags` (
+  `event_id` int NOT NULL,
+  `tag_id` int NOT NULL,
+  PRIMARY KEY (`event_id`,`tag_id`),
+  KEY `tag_id` (`tag_id`),
+  CONSTRAINT `EventTags_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `Events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `EventTags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `Tags` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Events`
 --
 
@@ -37,7 +54,7 @@ CREATE TABLE `Events` (
   KEY `created_by` (`created_by`),
   CONSTRAINT `Events_ibfk_1` FOREIGN KEY (`tag_id`) REFERENCES `Tags` (`id`),
   CONSTRAINT `Events_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `Users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -71,7 +88,7 @@ CREATE TABLE `Tags` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,4 +118,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-15  9:29:11
+-- Dump completed on 2025-01-05 16:28:55
