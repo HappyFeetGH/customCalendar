@@ -2,6 +2,6 @@
     "server": {
       "baseDir": "./public"
     },
-    "open": false
+    "open": true
   }
   
