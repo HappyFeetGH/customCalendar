@@ -1,7 +1,7 @@
 {
-    "server": {
-      "baseDir": "./public"
-    },
-    "open": true
+  "port": 3036,
+  "server": {
+    "baseDir": "./public",
+    "host": "0.0.0.0"
   }
-  
+}
