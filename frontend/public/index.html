@@ -47,6 +47,18 @@
       <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요">
       <button onclick="addTag(document.getElementById('tagNameInput').value)">추가</button>
     </div>
+    <div id="fixedEventsManager">
+      <h2>요일별 고정 이벤트 관리</h2>
+      <label for="fixedStartDate">시작일:</label>
+      <input type="date" id="fixedStartDate" />
+      <label for="fixedEndDate">종료일:</label>
+      <input type="date" id="fixedEndDate" />
+      <label class="toggle-label">
+        <input type="checkbox" id="toggleFixedEvents" onchange="toggleFixedEvents()" />
+        <span class="slider"></span> 고정 이벤트 활성화
+      </label>
+    </div>
+
   </div>
 
   <!-- Modal -->

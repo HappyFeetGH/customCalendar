@@ -604,3 +604,74 @@ document.getElementById('resetButton').addEventListener('click', function () {
     //calendar.refetchEvents(); // 모든 이벤트 다시 로드
     filterEventsByTags(); // 태그 필터 유지하며 다시 로드
 });
+
+/* 고정 이벤트 조정*/
+
+let fixedEventSource = null; // 고정 이벤트 소스
+let isFixedEventsActive = false; // 고정 이벤트 활성화 상태
+
+
+let fixedEvents = {
+    monday: ['6반 체육 2교시', '4반 체육 1교시'],
+    tuesday: [],
+    wednesday: ['4반 과학 1교시'],
+    thursday: ['4반 과학 3교시', '4반 과학 4교시'],
+    friday: [],
+    saturday: [],
+    sunday: []
+};
+
+function generateFixedEvents(startDate, endDate) {
+    const events = [];
+    const currentDate = new Date(startDate);
+  
+    while (currentDate <= new Date(endDate)) {
+      const day = currentDate.getDay(); // 요일 (0: 일요일, 1: 월요일, ...)
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const eventTitles = fixedEvents[dayNames[day]]; // 해당 요일의 이벤트 배열 가져오기
+  
+      if (eventTitles && eventTitles.length > 0) {
+        eventTitles.forEach(title => {
+          events.push({
+            title,
+            start: new Date(currentDate).toISOString(),
+            allDay: true,
+            backgroundColor: '#FFD700', // 이벤트 색상 설정
+            borderColor: '#FFAA00',     // 테두리 색상
+          });
+        });
+      }
+  
+      currentDate.setDate(currentDate.getDate() + 1); // 다음 날로 이동
+    }
+  
+    return events;
+}
+  
+
+function toggleFixedEvents() {
+    const toggle = document.getElementById('toggleFixedEvents').checked;
+    const startDate = document.getElementById('fixedStartDate').value;
+    const endDate = document.getElementById('fixedEndDate').value;
+  
+    if (!startDate || !endDate) {
+      alert('시작일과 종료일을 입력하세요.');
+      document.getElementById('toggleFixedEvents').checked = false;
+      return;
+    }
+  
+ 
+    if (toggle) {
+      const fixed = generateFixedEvents(startDate, endDate);
+      fixedEventSource = calendar.addEventSource(fixed);
+      isFixedEventsActive = true;
+      alert('고정 이벤트가 활성화되었습니다.');
+    } else {
+      if (fixedEventSource) {
+        fixedEventSource.remove(); // 기존 이벤트 소스 제거
+      }
+      isFixedEventsActive = false;
+      alert('고정 이벤트가 비활성화되었습니다.');
+    }
+  }
+  
