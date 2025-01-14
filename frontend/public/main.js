@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 네비게이션 버튼 클릭 이벤트
-    navCalendar.addEventListener('click', () => showPage('calendar'));
+    navCalendar.addEventListener('click', () => showPage('calendar'));  
     navManager.addEventListener('click', () => showPage('manager'));
 
     // 기본 페이지는 캘린더
@@ -45,12 +45,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 const filteredEvents = selectedTags.length > 0
                     ? events.filter(event => event.tags.some(tag => selectedTags.includes(tag)))
                     : events;
-
+                
                 const formattedEvents = filteredEvents.map(event => ({
                     id: event.id.toString(),
                     title: event.title,
                     start: event.start_datetime,
                     end: event.end_datetime,
+                    backgroundColor: event.colors,
                     tags: event.tags
                 }));
 
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    loadTagManager();
+    //loadTagManager();
     loadTagsForManager();
 });
 
@@ -395,24 +396,8 @@ function loadTags(eventId = null, selectedTags = []) {
         .catch(error => console.error('태그 로드 실패:', error));
 }
 
-function loadTagManager() {
-    fetch(`${API_BASE_URL}/api/events/tags`)
-        .then(response => response.json())
-        .then(tags => {
-            const tagList = document.getElementById('tagList');
-            tagList.innerHTML = ''; // 기존 태그 제거
-            tags.forEach(tag => {
-                const li = document.createElement('li');
-                li.textContent = tag.name;
-                tagList.appendChild(li);
-            });
-        })
-        .catch(error => console.error('태그 로드 실패:', error));
-}
-
 // 태그 추가
-function addTag(name) {
-    console.log('Adding tag:', name);
+function addTag(name, color) {    
     if (!name || name.trim() === '') {
         alert('태그 이름을 입력하세요.');
         return;
@@ -421,7 +406,7 @@ function addTag(name) {
     fetch(`${API_BASE_URL}/api/events/tags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, color }),
     })
         .then(response => {
             if (!response.ok) {
@@ -442,6 +427,26 @@ function addTag(name) {
             alert('태그 추가 중 에러가 발생했습니다.');
         });
 }
+
+// 태그 색상 수정
+function updateTagColor(tagId, name, newColor) {
+    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, color: newColor }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('태그 색상이 수정되었습니다!');
+                loadTags();
+            } else {
+                alert('태그 수정에 실패했습니다.');
+            }
+        })
+        .catch(err => console.error('태그 수정 중 에러 발생:', err));
+}
+
 
 function filterEventsByTags() {
     const selectedTags = Array.from(document.querySelectorAll('#tagFilter input[type="checkbox"]:checked'))
@@ -473,6 +478,7 @@ function filterEventsByTags() {
                 title: event.title,
                 start: new Date(event.start_datetime).toISOString(),
                 end: new Date(event.end_datetime).toISOString(),
+                backgroundColor: event.colors,
                 tags: event.tags || []
             }));
             
@@ -516,6 +522,18 @@ function loadTagsForManager() {
                 label.textContent = tag.name;
                 label.style.marginLeft = '10px';
 
+                // 태그 색상
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.value = tag.color;
+                colorInput.className = 'tag-color-input';
+                colorInput.style.marginLeft = '10px';
+
+                // 수정 버튼
+                const updateButton = document.createElement('button');
+                updateButton.textContent = '수정';
+                updateButton.onclick = () => updateTag(tag.id, tag.name, colorInput.value);
+
                 // 삭제 버튼 생성
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = '삭제';
@@ -531,12 +549,46 @@ function loadTagsForManager() {
 
                 container.appendChild(checkbox);
                 container.appendChild(label);
+                container.appendChild(colorInput);
+                container.appendChild(updateButton);
                 container.appendChild(deleteButton);
                 tagList.appendChild(container);
             });
         })
         .catch(error => console.error('태그 로드 실패:', error));
 }
+
+function updateTag(tagId, name, color) {
+    if (!name || !color) {
+        alert('태그 이름과 색상을 모두 입력하세요.');
+        return;
+    }
+
+    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, color }),
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('태그 업데이트 실패');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('태그가 성공적으로 업데이트되었습니다!');
+                loadTagsForManager(); // 태그 목록을 다시 로드합니다.
+            } else {
+                alert('태그 업데이트에 실패했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('태그 업데이트 중 오류 발생:', error);
+            alert('태그 업데이트 중 오류가 발생했습니다.');
+        });
+}
+
 
 function deleteTag(tagId) {
     if (!confirm('태그를 삭제하시겠습니까?')) return;
@@ -552,6 +604,7 @@ function deleteTag(tagId) {
             if (data.success) {
                 alert('태그가 삭제되었습니다.');
                 loadTags(); // 태그 목록 갱신
+                loadTagsForManager(); // 태그 목록을 다시 로드합니다.
             } else {
                 alert('태그 삭제에 실패했습니다.');
             }
@@ -588,6 +641,7 @@ document.getElementById('searchButton').addEventListener('click', function () {
                 title: event.title,
                 start: new Date(event.start_datetime).toISOString(),
                 end: new Date(event.end_datetime).toISOString(),
+                backgroundColor: event.colors,
                 tags: event.tags || []
             }));
 

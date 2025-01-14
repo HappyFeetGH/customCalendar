@@ -45,7 +45,8 @@
     <div id="tagManager">
       <div id="tagList"></div>
       <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요">
-      <button onclick="addTag(document.getElementById('tagNameInput').value)">추가</button>
+      <input type="color" id="tagColorInput" value="#FFFFFF" />
+      <button onclick="addTag(document.getElementById('tagNameInput').value, document.getElementById('tagColorInput').value)">추가</button>
     </div>
     <div id="fixedEventsManager">
       <h2>요일별 고정 이벤트 관리</h2>
