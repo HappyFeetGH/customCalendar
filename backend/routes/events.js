@@ -112,8 +112,13 @@ router.post('/', (req, res) => {
 router.get('/', (req, res) => {
     const query = `
         SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime, e.created_by, 
-               JSON_ARRAYAGG(t.name) AS tags,
-               GROUP_CONCAT(t.color) as colors
+            JSON_ARRAYAGG(t.name) AS tags,
+            (SELECT t.color 
+                FROM Tags t
+                INNER JOIN EventTags et ON t.id = et.tag_id
+                WHERE et.event_id = e.id
+                ORDER BY t.id ASC
+                LIMIT 1) AS primary_color
         FROM Events e
         LEFT JOIN EventTags et ON e.id = et.event_id
         LEFT JOIN Tags t ON et.tag_id = t.id

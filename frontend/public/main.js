@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: event.title,
                     start: event.start_datetime,
                     end: event.end_datetime,
-                    backgroundColor: event.colors,
+                    backgroundColor: event.primary_color,
                     tags: event.tags
                 }));
 
@@ -478,7 +478,7 @@ function filterEventsByTags() {
                 title: event.title,
                 start: new Date(event.start_datetime).toISOString(),
                 end: new Date(event.end_datetime).toISOString(),
-                backgroundColor: event.colors,
+                backgroundColor: event.primary_color,
                 tags: event.tags || []
             }));
             
@@ -641,7 +641,7 @@ document.getElementById('searchButton').addEventListener('click', function () {
                 title: event.title,
                 start: new Date(event.start_datetime).toISOString(),
                 end: new Date(event.end_datetime).toISOString(),
-                backgroundColor: event.colors,
+                backgroundColor: event.primary_color,
                 tags: event.tags || []
             }));
 
