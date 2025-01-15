@@ -112,7 +112,13 @@ router.post('/', (req, res) => {
 router.get('/', (req, res) => {
     const query = `
         SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime, e.created_by, 
-               JSON_ARRAYAGG(t.name) AS tags
+            JSON_ARRAYAGG(t.name) AS tags,
+            (SELECT t.color 
+                FROM Tags t
+                INNER JOIN EventTags et ON t.id = et.tag_id
+                WHERE et.event_id = e.id
+                ORDER BY t.id ASC
+                LIMIT 1) AS primary_color
         FROM Events e
         LEFT JOIN EventTags et ON e.id = et.event_id
         LEFT JOIN Tags t ON et.tag_id = t.id
@@ -287,14 +293,18 @@ router.get('/tags', (req, res) => {
 
 
 router.post('/tags', (req, res) => {
-    const { name } = req.body;
-    const query = `INSERT INTO Tags (name) VALUES (?)`;
-    connection.query(query, [name], (err) => {
+    const { name, color } = req.body;
+    if (!name) {
+        return res.status(400).json({ success: false, message: '태그 이름이 필요합니다.' });
+    }
+
+    const query = `INSERT INTO Tags (name, color) VALUES (?, ?)`;
+    connection.query(query, [name, color || '#FFFFFF'], (err, result) => {
         if (err) {
             console.error('태그 추가 실패:', err);
-            return res.status(500).json({ success: false });
+            return res.status(500).json({ success: false, message: '태그 추가 실패' });
         }
-        res.json({ success: true });
+        res.json({ success: true, id: result.insertId });
     });
 });
 
@@ -325,6 +335,20 @@ router.delete('/tags/:id', (req, res) => {
     });
 });
 
+// 태그 색상 변경 API
+router.put('/tags/:id', (req, res) => {
+    const { id } = req.params;
+    const { name, color } = req.body;
+
+    const query = `UPDATE Tags SET name = ?, color = ? WHERE id = ?`;
+    connection.query(query, [name, color, id], (err, result) => {
+        if (err) {
+            console.error('태그 수정 실패:', err);
+            return res.status(500).json({ success: false, message: '태그 수정 실패' });
+        }
+        res.json({ success: true });
+    });
+});
 
 
 // 검색 API
