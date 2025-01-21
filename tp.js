@@ -56,7 +56,7 @@ function insertHolidayEvents(year) {
             const formattedDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
             const title = holiday.dateName;
 
-            connection.query(
+            pool.query(
                 insertQuery,
                 [title, '공휴일', formattedDate, formattedDate, 1, 9], // 시스템 계정(0)과 공휴일 태그 사용
                 (err) => {

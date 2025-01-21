@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const connection = require('../db/connection');
-
+const { pool } = require('../db/connection');
 
 // 이벤트 저장 API
 router.post('/', (req, res) => {
@@ -19,14 +18,14 @@ router.post('/', (req, res) => {
             }
 
             const checkTagQuery = `SELECT id FROM Tags WHERE name = ?`;
-            connection.query(checkTagQuery, [tagName.trim()], (err, results) => {
+            pool.query(checkTagQuery, [tagName.trim()], (err, results) => {
                 if (err) return reject(err);
 
                 if (results.length > 0) {
                     resolve(results[0].id); // 기존 태그 ID 반환
                 } else {
                     const insertTagQuery = `INSERT INTO Tags (name, color) VALUES (?, ?)`;
-                    connection.query(insertTagQuery, [tagName.trim(), '#FFFFFF'], (err, result) => {
+                    pool.query(insertTagQuery, [tagName.trim(), '#FFFFFF'], (err, result) => {
                         if (err) return reject(err);
                         resolve(result.insertId); // 새로 생성된 태그 ID 반환
                     });
@@ -60,7 +59,7 @@ router.post('/', (req, res) => {
             const eventEnd = new Date(currentEndDate);
 
             const promise = new Promise((resolve, reject) => {
-                connection.query(insertEventQuery, [title, description, eventStart, eventEnd, 1], (err, result) => {
+                pool.query(insertEventQuery, [title, description, eventStart, eventEnd, 1], (err, result) => {
                     if (err) {
                         console.error('이벤트 저장 실패:', err);
                         return reject(err);
@@ -72,7 +71,7 @@ router.post('/', (req, res) => {
                     const insertEventTagsQuery = `INSERT INTO EventTags (event_id, tag_id) VALUES ?`;
                     const eventTagsData = tagIds.map(tagId => [eventId, tagId]);
 
-                    connection.query(insertEventTagsQuery, [eventTagsData], (err) => {
+                    pool.query(insertEventTagsQuery, [eventTagsData], (err) => {
                         if (err) {
                             console.error('EventTags 저장 실패:', err);
                             return reject(err);
@@ -125,7 +124,7 @@ router.get('/', (req, res) => {
         GROUP BY e.id
     `;
 
-    connection.query(query, (err, results) => {
+    pool.query(query, (err, results) => {
         if (err) {
             console.error('이벤트 데이터 로드 실패:', err);
             return res.status(500).json({ success: false, message: '이벤트 데이터 로드 실패' });
@@ -146,7 +145,7 @@ router.put('/:id(\\d+)', (req, res) => {
         WHERE id = ?
     `;
 
-    connection.query(updateEventQuery, [title, description, start, end, id], (err) => {
+    pool.query(updateEventQuery, [title, description, start, end, id], (err) => {
         if (err) {
             console.error('이벤트 수정 실패:', err);
             return res.status(500).json({ success: false, message: '이벤트 수정 실패' });
@@ -157,7 +156,7 @@ router.put('/:id(\\d+)', (req, res) => {
             DELETE FROM EventTags WHERE event_id = ?
         `;
 
-        connection.query(deleteTagsQuery, [id], (err) => {
+        pool.query(deleteTagsQuery, [id], (err) => {
             if (err) {
                 console.error('기존 태그 삭제 실패:', err);
                 return res.status(500).json({ success: false, message: '태그 업데이트 실패' });
@@ -169,14 +168,14 @@ router.put('/:id(\\d+)', (req, res) => {
                 const tagPromises = tags.map(tagName => {
                     return new Promise((resolve, reject) => {
                         const query = `SELECT id FROM Tags WHERE name = ?`;
-                        connection.query(query, [tagName], (err, results) => {
+                        pool.query(query, [tagName], (err, results) => {
                             if (err) return reject(err);
                             if (results.length > 0) {
                                 resolve(results[0].id); // 기존 태그 ID 반환
                             } else {
                                 // 태그가 없으면 새로 생성
                                 const insertTagQuery = `INSERT INTO Tags (name) VALUES (?)`;
-                                connection.query(insertTagQuery, [tagName], (err, result) => {
+                                pool.query(insertTagQuery, [tagName], (err, result) => {
                                     if (err) return reject(err);
                                     resolve(result.insertId); // 새로 생성된 태그 ID 반환
                                 });
@@ -194,7 +193,7 @@ router.put('/:id(\\d+)', (req, res) => {
                         `;
                         const values = tagIds.map(tagId => [id, tagId]);
 
-                        connection.query(insertTagsQuery, [values], (err) => {
+                        pool.query(insertTagsQuery, [values], (err) => {
                             if (err) {
                                 console.error('태그 추가 실패:', err);
                                 return res.status(500).json({ success: false, message: '태그 추가 실패' });
@@ -223,7 +222,7 @@ router.delete('/:id(\\d+)', (req, res) => {
     // 1. EventTags에서 해당 이벤트와 관련된 태그 삭제
     const deleteEventTagsQuery = `DELETE FROM EventTags WHERE event_id = ?`;
 
-    connection.query(deleteEventTagsQuery, [id], (err) => {
+    pool.query(deleteEventTagsQuery, [id], (err) => {
         if (err) {
             console.error('EventTags 삭제 실패:', err);
             return res.status(500).json({ success: false, message: '태그 삭제 실패' });
@@ -232,7 +231,7 @@ router.delete('/:id(\\d+)', (req, res) => {
         // 2. Events 테이블에서 이벤트 삭제
         const deleteEventQuery = `DELETE FROM Events WHERE id = ?`;
 
-        connection.query(deleteEventQuery, [id], (err) => {
+        pool.query(deleteEventQuery, [id], (err) => {
             if (err) {
                 console.error('이벤트 삭제 실패:', err);
                 return res.status(500).json({ success: false, message: '이벤트 삭제 실패' });
@@ -260,7 +259,7 @@ router.get('/:id(\\d+)', (req, res) => {
             e.id
     `;
 
-    connection.query(selectQuery, [id], (err, results) => {
+    pool.query(selectQuery, [id], (err, results) => {
         if (err) {
             console.error('이벤트 조회 실패:', err);
             return res.status(500).json({ success: false, message: '이벤트 조회 실패' });
@@ -282,7 +281,7 @@ router.get('/:id(\\d+)', (req, res) => {
 
 router.get('/tags', (req, res) => {    
     const query = `SELECT * FROM Tags`;
-    connection.query(query, (err, results) => {
+    pool.query(query, (err, results) => {
         if (err) {
             console.error('태그 조회 실패:', err);
             return res.status(500).json({ success: false });
@@ -299,7 +298,7 @@ router.post('/tags', (req, res) => {
     }
 
     const query = `INSERT INTO Tags (name, color) VALUES (?, ?)`;
-    connection.query(query, [name, color || '#FFFFFF'], (err, result) => {
+    pool.query(query, [name, color || '#FFFFFF'], (err, result) => {
         if (err) {
             console.error('태그 추가 실패:', err);
             return res.status(500).json({ success: false, message: '태그 추가 실패' });
@@ -314,7 +313,7 @@ router.delete('/tags/:id', (req, res) => {
 
     const deleteTagQuery = `DELETE FROM Tags WHERE id = ?`;
 
-    connection.query(deleteTagQuery, [id], (err, result) => {
+    pool.query(deleteTagQuery, [id], (err, result) => {
         if (err) {
             console.error('태그 삭제 실패:', err);
             return res.status(500).json({ success: false, message: '태그 삭제 실패' });
@@ -323,7 +322,7 @@ router.delete('/tags/:id', (req, res) => {
         /*
         // 삭제 성공 시 관련 EventTags도 삭제
         const deleteEventTagsQuery = `DELETE FROM EventTags WHERE tag_id = ?`;
-        connection.query(deleteEventTagsQuery, [id], (err) => {
+        pool.query(deleteEventTagsQuery, [id], (err) => {
             if (err) {
                 console.error('관련 EventTags 삭제 실패:', err);
                 return res.status(500).json({ success: false, message: '관련 EventTags 삭제 실패' });
@@ -341,7 +340,7 @@ router.put('/tags/:id', (req, res) => {
     const { name, color } = req.body;
 
     const query = `UPDATE Tags SET name = ?, color = ? WHERE id = ?`;
-    connection.query(query, [name, color, id], (err, result) => {
+    pool.query(query, [name, color, id], (err, result) => {
         if (err) {
             console.error('태그 수정 실패:', err);
             return res.status(500).json({ success: false, message: '태그 수정 실패' });
@@ -371,7 +370,7 @@ router.get('/search', (req, res) => {
 
     const searchTerm = `%${query}%`;
 
-    connection.query(searchQuery, [searchTerm, searchTerm], (err, results) => {
+    pool.query(searchQuery, [searchTerm, searchTerm], (err, results) => {
         if (err) {
             console.error('검색 실패:', err);
             return res.status(500).json({ success: false, message: '검색 실패' });
