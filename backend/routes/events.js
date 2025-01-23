@@ -49,8 +49,8 @@ router.post('/', (req, res) => {
             VALUES (?, ?, ?, ?, ?)
         `;
 
-        let currentDate = new Date(start);
-        let currentEndDate = new Date(end);
+        let currentDate = new Date(new Date(start).getTime() + 9 * 60 * 60 * 1000);
+        let currentEndDate = new Date(new Date(end).getTime() + 9 * 60 * 60 * 1000);
 
         const promises = [];
 
@@ -145,7 +145,10 @@ router.put('/:id(\\d+)', (req, res) => {
         WHERE id = ?
     `;
 
-    pool.query(updateEventQuery, [title, description, start, end, id], (err) => {
+    let currentDate = new Date(new Date(start).getTime() + 9 * 60 * 60 * 1000);
+    let currentEndDate = new Date(new Date(end).getTime() + 9 * 60 * 60 * 1000);
+
+    pool.query(updateEventQuery, [title, description, currentDate, currentEndDate, id], (err) => {
         if (err) {
             console.error('이벤트 수정 실패:', err);
             return res.status(500).json({ success: false, message: '이벤트 수정 실패' });
