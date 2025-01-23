@@ -147,7 +147,7 @@ router.put('/:id(\\d+)', (req, res) => {
 
     let currentDate = new Date(new Date(start).getTime() + 9 * 60 * 60 * 1000);
     let currentEndDate = new Date(new Date(end).getTime() + 9 * 60 * 60 * 1000);
-
+    
     pool.query(updateEventQuery, [title, description, currentDate, currentEndDate, id], (err) => {
         if (err) {
             console.error('이벤트 수정 실패:', err);

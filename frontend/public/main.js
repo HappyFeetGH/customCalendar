@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         selectable: true,
+        timeZone: 'Asia/Seoul',
         dateClick: function (info) {
             document.getElementById('event-start').value = info.dateStr + 'T00:00';
             document.getElementById('event-end').value = info.dateStr + 'T01:00';
