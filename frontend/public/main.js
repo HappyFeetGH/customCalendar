@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function () {
     loadTagsForManager();
 
     loadAnnouncement();
+
+    loadReminders();
+    loadReminderManager();
 });
 
 
@@ -798,4 +801,108 @@ function renderMarkdown(markdown) {
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\n/g, '<br>');
 }
-  
+
+//리마인더 로드
+function loadReminders() {
+    fetch(`${API_BASE_URL}/api/events/reminders`)
+        .then((response) => response.json())
+        .then((reminders) => {
+            const today = new Date();
+
+            reminders.forEach((reminder) => {
+                const endDate = new Date(reminder.end_datetime);
+                const daysDifference = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
+                displayReminder(reminder, daysDifference);
+            });
+        })
+        .catch((error) => console.error('리마인더 로드 실패:', error));
+}
+
+// 리마인더 표시
+function displayReminder(reminder, daysDifference) {
+    const message =
+        daysDifference === 0
+            ? `오늘`
+            : daysDifference > 0
+            ? `${daysDifference}일 후`
+            : `${Math.abs(daysDifference)}일 전`;
+
+    const reminderCard = document.createElement('div');
+    reminderCard.className = 'reminder-card';
+    reminderCard.innerHTML = `
+        <p><strong>${reminder.title}</strong></p>
+        <p>${message}</p>
+        <button class="close-reminder">X</button>
+    `;
+
+    reminderCard.querySelector('.close-reminder').addEventListener('click', () => {
+        reminderCard.remove();
+    });
+
+    document.body.appendChild(reminderCard);
+}
+
+
+function loadReminderManager() {
+    fetch(`${API_BASE_URL}/api/events`)
+        .then((response) => response.json())
+        .then((events) => {
+            const reminderManager = document.getElementById('reminderManager');
+            reminderManager.innerHTML = ''; // 기존 목록 초기화
+
+            events.forEach((event) => {
+                const container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.marginBottom = '10px';
+
+                // 리마인더 체크박스
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = event.reminder_enabled; // 리마인더 상태 반영]
+                
+                checkbox.id = `reminder-${event.id}`;
+
+                // 이벤트 제목
+                const label = document.createElement('label');
+                label.htmlFor = `reminder-${event.id}`;
+                label.textContent = event.title;
+                label.style.marginLeft = '10px';
+
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                reminderManager.appendChild(container);
+            });
+        })
+        .catch((error) => console.error('리마인더 관리자 로드 실패:', error));
+}
+
+// 저장 버튼 이벤트
+document.getElementById('saveReminderSettings').addEventListener('click', () => {
+    const reminders = Array.from(document.querySelectorAll('#reminderManager div')).map((div) => {
+        const id = div.querySelector('input[type="checkbox"]').id.split('-')[1]; // 이벤트 ID
+        const reminderEnabled = div.querySelector('input[type="checkbox"]').checked; // 체크 상태
+
+        return { id, reminder_enabled: reminderEnabled };
+    });
+
+    // 리마인더 설정 업데이트 요청
+    Promise.all(
+        reminders.map((reminder) =>
+            fetch(`${API_BASE_URL}/api/events/reminder/${reminder.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reminder_enabled: reminder.reminder_enabled }),
+            })            
+        )
+    )
+        .then(() => {            
+            alert('리마인더 설정이 저장되었습니다.');
+        })
+        .catch((error) => {
+            console.error('리마인더 저장 실패:', error);
+            alert('리마인더 저장 중 오류가 발생했습니다.');
+        });
+});
+
