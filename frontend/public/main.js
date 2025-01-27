@@ -128,6 +128,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //loadTagManager();
     loadTagsForManager();
+
+    loadAnnouncement();
 });
 
 
@@ -728,5 +730,72 @@ function toggleFixedEvents() {
       isFixedEventsActive = false;
       alert('고정 이벤트가 비활성화되었습니다.');
     }
-  }
+}
+
+
+// 공지 로드
+function loadAnnouncement() {
+    fetch(`${API_BASE_URL}/api/events/announcement`)
+      .then((response) => response.json())
+      .then((data) => {
+        const announcementDisplay = document.getElementById('announcementDisplay');
+        announcementDisplay.innerHTML = renderMarkdown(data.announcement || '공지 사항이 없습니다.');
+      })
+      .catch((error) => console.error('공지 불러오기 실패:', error));
+}
+
+//공지 저장
+document.getElementById('updateAnnouncementButton').addEventListener('click', function () {
+    const newAnnouncement = document.getElementById('announcementInput').value;
+  
+    fetch(`${API_BASE_URL}/api/events/announcement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ announcement: newAnnouncement }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert('공지 업데이트 성공!');
+          loadAnnouncement(); // 공지를 새로 불러옵니다.
+        } else {
+          alert('공지 업데이트 실패!');
+        }
+      })
+      .catch((error) => console.error('공지 업데이트 중 오류:', error));
+});
+
+// 공지 삭제 버튼 클릭 이벤트
+document.getElementById('deleteAnnouncementButton').addEventListener('click', function () {
+    if (!confirm('정말로 공지를 삭제하시겠습니까?')) return;
+
+    fetch(`${API_BASE_URL}/api/events/announcement`, {
+        method: 'DELETE',
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                alert('공지 삭제 완료!');
+                document.getElementById('announcementInput').value = ''; // 텍스트박스 초기화
+                loadAnnouncement(); // 공지 초기화
+            } else {
+                alert('공지 삭제 실패!');
+            }
+        })
+        .catch((error) => console.error('공지 삭제 중 오류:', error));
+});
+
+
+// 마크다운 변환함수
+function renderMarkdown(markdown) {
+    if (!markdown) return '';
+    return markdown
+      .replace(/# (.*?)(\n|$)/g, '<h1>$1</h1>')
+      .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')
+      .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.*?)\*/g, '<i>$1</i>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
+}
   

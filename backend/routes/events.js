@@ -383,6 +383,55 @@ router.get('/search', (req, res) => {
     });
 });
 
+//공지 불러오기
+router.get('/announcement', (req, res) => {
+    const query = `
+      SELECT id, announcement, created_at, updated_at
+      FROM Announcements
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `;
+  
+    pool.query(query, (err, results) => {
+      if (err) {
+        console.error('공지 불러오기 실패:', err);
+        return res.status(500).json({ success: false, message: '공지 불러오기 실패' });
+      }
+      res.json(results[0] || { announcement: '' });
+    });
+});
+  
+//공지 저장
+router.post('/announcement', (req, res) => {
+    const { announcement } = req.body;
+  
+    const query = `
+      INSERT INTO Announcements (announcement)
+      VALUES (?)
+    `;
+  
+    pool.query(query, [announcement], (err) => {
+      if (err) {
+        console.error('공지 저장 실패:', err);
+        return res.status(500).json({ success: false, message: '공지 저장 실패' });
+      }
+      res.json({ success: true });
+    });
+});
+  
+//공지 삭제
+router.delete('/announcement', (req, res) => {
+    const query = `DELETE FROM Announcements`;
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('공지 삭제 실패:', err);
+            return res.status(500).json({ success: false, message: '공지 삭제 실패' });
+        }
+        res.json({ success: true });
+    });
+});
+
 
 
 function getPeriodFromTime(time) {
