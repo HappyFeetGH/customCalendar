@@ -110,7 +110,7 @@ router.post('/', (req, res) => {
 // 이벤트 로드 API
 router.get('/', (req, res) => {
     const query = `
-        SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime, e.created_by, 
+        SELECT e.id, e.title, e.description, e.start_datetime, e.end_datetime, e.created_by, e.reminder_enabled, 
             JSON_ARRAYAGG(t.name) AS tags,
             (SELECT t.color 
                 FROM Tags t
@@ -147,7 +147,7 @@ router.put('/:id(\\d+)', (req, res) => {
 
     let currentDate = new Date(new Date(start).getTime() + 9 * 60 * 60 * 1000);
     let currentEndDate = new Date(new Date(end).getTime() + 9 * 60 * 60 * 1000);
-
+    
     pool.query(updateEventQuery, [title, description, currentDate, currentEndDate, id], (err) => {
         if (err) {
             console.error('이벤트 수정 실패:', err);
@@ -380,6 +380,89 @@ router.get('/search', (req, res) => {
         }
 
         res.json({ success: true, events: results });
+    });
+});
+
+//공지 불러오기
+router.get('/announcement', (req, res) => {
+    const query = `
+      SELECT id, announcement, created_at, updated_at
+      FROM Announcements
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `;
+  
+    pool.query(query, (err, results) => {
+      if (err) {
+        console.error('공지 불러오기 실패:', err);
+        return res.status(500).json({ success: false, message: '공지 불러오기 실패' });
+      }
+      res.json(results[0] || { announcement: '' });
+    });
+});
+  
+//공지 저장
+router.post('/announcement', (req, res) => {
+    const { announcement } = req.body;
+  
+    const query = `
+      INSERT INTO Announcements (announcement)
+      VALUES (?)
+    `;
+  
+    pool.query(query, [announcement], (err) => {
+      if (err) {
+        console.error('공지 저장 실패:', err);
+        return res.status(500).json({ success: false, message: '공지 저장 실패' });
+      }
+      res.json({ success: true });
+    });
+});
+  
+//공지 삭제
+router.delete('/announcement', (req, res) => {
+    const query = `DELETE FROM Announcements`;
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('공지 삭제 실패:', err);
+            return res.status(500).json({ success: false, message: '공지 삭제 실패' });
+        }
+        res.json({ success: true });
+    });
+});
+
+//리마인더 데이터 조회 API
+router.get('/reminders', (req, res) => {
+    const query = `
+        SELECT id, title, start_datetime, end_datetime
+        FROM Events
+        WHERE reminder_enabled = TRUE
+    `;
+
+    pool.query(query, (err, results) => {
+        if (err) {
+            console.error('리마인더 조회 실패:', err);
+            return res.status(500).json({ success: false, message: '리마인더 조회 실패' });
+        }
+        res.json(results);
+    });
+});
+
+
+//리마인더 데이터 수정 api
+router.put('/reminder/:id', (req, res) => {
+    const { id } = req.params;
+    const { reminder_enabled } = req.body;
+
+    const query = `UPDATE Events SET reminder_enabled = ? WHERE id = ?`;
+    pool.query(query, [reminder_enabled, id], (err, result) => {
+        if (err) {
+            console.error('리마인더 업데이트 실패:', err);
+            return res.status(500).json({ success: false, message: '리마인더 업데이트 실패' });
+        }
+
+        res.json({ success: true });
     });
 });
 
