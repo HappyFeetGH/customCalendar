@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 
@@ -15,10 +16,13 @@ app.use(cors({
 
 app.use(express.json());
 
+
 // 라우트 설정
 const eventRoutes = require('./routes/events');
 app.use('/api/events', eventRoutes);
 
+const mergeRoutes = require('./routes/purchase');
+app.use('/api/purchase', mergeRoutes);
 
 // 서버 시작
 const PORT = process.env.PORT || 5000;

@@ -22,6 +22,7 @@
   <nav>
     <button id="nav-calendar">캘린더</button>
     <button id="nav-manager">태그 관리</button>
+    <button id="nav-purchase">취합 관련</button>
   </nav>
 
   <div id="searchBar" style="margin-bottom: 20px;">
@@ -75,9 +76,12 @@
     <button id="saveReminderSettings" style="margin-top: 10px; padding: 8px 12px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">
       저장
     </button>
-  
 
+    <h2>취합 관리</h2>
+    <div id="purchaseManager"></div>
   </div>
+  
+  <div id="purchase-page" class="page" style="display: none;"></div>
 
   <!-- Modal -->
   <div id="eventModal" class="modal" style="display:none;">
@@ -136,6 +140,7 @@
     </div>
   </div>
 
+  <div id="content"></div>
   <!-- Main JavaScript -->
   <script src="./main.js"></script>
 </body>

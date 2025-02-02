@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h2>구매 취합 관리</h2>
+    
+    <h3>📌 취합 요청 추가</h3>
+    <input type="text" id="requestTitle" placeholder="취합 사유 입력">
+    <button onclick="addPurchaseRequest()">추가</button>
+    
+    <h3>📌 취합 요청 목록</h3>
+    <ul id="requestList"></ul>
+
+    <h3>📌 품목 추가</h3>
+    <select id="requestSelect"></select>
+    <input type="text" id="purchaser" placeholder="취합 대상자">
+    <input type="text" id="itemName" placeholder="물품 이름">
+    <input type="text" id="specification" placeholder="규격">
+    <input type="number" id="quantity" placeholder="개수">
+    <input type="number" id="unitPrice" placeholder="단가">
+    <select id="deliveryFee">
+        <option value="0">택배비 없음</option>
+        <option value="1">택배비 있음</option>
+    </select>
+    <input type="text" id="note" placeholder="비고(구입처)">
+    <button onclick="addPurchaseItem()">품목 추가</button>
+
+    <h3>📌 품목 리스트</h3>
+    <ul id="itemList"></ul>
+  <script src="merge.html"></script>
+</body>
+</html>

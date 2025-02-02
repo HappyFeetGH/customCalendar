@@ -7,23 +7,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const calendarPage = document.getElementById('calendar-page');
     const managerPage = document.getElementById('manager-page');
+    const purchasePage = document.getElementById('purchase-page');
+
     const navCalendar = document.getElementById('nav-calendar');
     const navManager = document.getElementById('nav-manager');
+    const navPurchase = document.getElementById('nav-purchase');
 
     // 페이지 전환 함수
     function showPage(page) {
         if (page === 'calendar') {
             calendarPage.style.display = 'block';
             managerPage.style.display = 'none';
+            purchasePage.style.display = 'none';            
         } else if (page === 'manager') {
             calendarPage.style.display = 'none';
             managerPage.style.display = 'block';
+            purchasePage.style.display = 'none';            
+        } else if (page === 'merge'){
+            calendarPage.style.display = 'none';
+            managerPage.style.display = 'none';
+            purchasePage.style.display = 'block';            
         }
     }
 
     // 네비게이션 버튼 클릭 이벤트
     navCalendar.addEventListener('click', () => showPage('calendar'));  
     navManager.addEventListener('click', () => showPage('manager'));
+    navPurchase.addEventListener('click', () => showPage('merge'));
 
     // 기본 페이지는 캘린더
     showPage('calendar');
@@ -133,6 +143,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     loadReminders();
     loadReminderManager();
+
+    loadManagerPage("purchase/manager", "purchaseManager","purchase/manager");
+    loadManagerPage("purchase/participants", "purchase-page","purchase/participants");
 });
 
 
@@ -905,4 +918,23 @@ document.getElementById('saveReminderSettings').addEventListener('click', () => 
             alert('리마인더 저장 중 오류가 발생했습니다.');
         });
 });
+
+
+
+function loadManagerPage(pagename, divname,jsname=""){
+    fetch(`${pagename}.html`)  // AJAX 요청
+    .then(response => {
+        if (!response.ok) throw new Error('페이지 로드 실패');
+        return response.text();
+    })
+    .then(html => {
+        document.getElementById(divname).innerHTML = html;
+
+        // 추가적으로 필요한 스크립트 실행
+        const script = document.createElement('script');
+        script.src = `${jsname}.js`; // 매니저 페이지의 전용 스크립트
+        document.body.appendChild(script);
+    })
+    .catch(error => console.error('Error loading manager page:', error));
+}
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물품 취합</title>
+    <link rel="stylesheet" href="styles.css">    
+</head>
+<body>
+    <h2>물품 취합</h2>
+
+    <!-- 취합 사유 선택 -->
+    <label for="requestSelectDetail">취합 사유 선택:</label>
+    <select id="requestSelectDetail">
+        <option value="">사유를 선택하세요</option>
+    </select>
+
+    <!-- 취합 대상자 선택 -->
+    <label for="participantSelect">취합 대상자 선택:</label>
+    <select id="participantSelect" disabled>
+        <option value="">대상을 선택하세요</option>
+    </select>
+
+    <!-- 물품 입력 폼 -->    
+    <div id="itemForm" style="display: none;"></div>    
+
+    <table id="itemTable">
+        <thead>
+          <tr>
+            <th>물품 이름</th>
+            <th>규격</th>
+            <th>개수</th>
+            <th>단가</th>
+            <th>비고(구입처)</th>
+            <th>택배비</th>  
+            <th>총액</th>          
+            <th>작업</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 기존 물품 목록 행 + 새 행(추가) -->
+        </tbody>
+      </table>
+
+    <h3>추가된 품목</h3>
+    <ul id="itemList"></ul>
+
+    <script src="participants.js"></script>
+</body>
+</html>

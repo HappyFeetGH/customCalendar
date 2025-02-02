@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>취합 매니저</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h2>취합 사유 관리</h2>
+    <input type="text" id="requestTitle" placeholder="취합 사유 입력">
+    <button onclick="addRequest()">추가</button>
+    <ul id="requestList"></ul>
+
+    <h2>취합 대상자 관리</h2>
+    <select id="requestSelect"></select>
+    <input type="text" id="participantName" placeholder="대상자 입력">
+    <button onclick="addParticipant()">추가</button>
+    <ul id="participantList"></ul>
+
+    <script src="manager.js"></script>
+</body>
+</html>
