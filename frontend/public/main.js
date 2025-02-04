@@ -13,30 +13,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const navManager = document.getElementById('nav-manager');
     const navPurchase = document.getElementById('nav-purchase');
 
-    // 페이지 전환 함수
-    function showPage(page) {
-        if (page === 'calendar') {
-            calendarPage.style.display = 'block';
-            managerPage.style.display = 'none';
-            purchasePage.style.display = 'none';            
-        } else if (page === 'manager') {
-            calendarPage.style.display = 'none';
-            managerPage.style.display = 'block';
-            purchasePage.style.display = 'none';            
-        } else if (page === 'merge'){
-            calendarPage.style.display = 'none';
-            managerPage.style.display = 'none';
-            purchasePage.style.display = 'block';            
-        }
-    }
-
     // 네비게이션 버튼 클릭 이벤트
-    navCalendar.addEventListener('click', () => showPage('calendar'));  
-    navManager.addEventListener('click', () => showPage('manager'));
-    navPurchase.addEventListener('click', () => showPage('merge'));
+    //navCalendar.addEventListener('click', () => showPage('calendar'));  
+    navManager.addEventListener('click', () => window.open("/purchase/manager.html", "_blank"));
+    navPurchase.addEventListener('click', () => window.open("/purchase/participants.html", "_blank"));
 
     // 기본 페이지는 캘린더
-    showPage('calendar');
+    //showPage('calendar');
 
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
@@ -136,16 +119,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    //loadTagManager();
-    loadTagsForManager();
-
     loadAnnouncement();
 
     loadReminders();
-    loadReminderManager();
+    //loadReminderManager();
 
-    loadManagerPage("purchase/manager", "purchaseManager","purchase/manager");
-    loadManagerPage("purchase/participants", "purchase-page","purchase/participants");
+    //loadManagerPage("purchase/manager", "purchaseManager","purchase/manager");
+    //loadManagerPage("purchase/participants", "purchase-page","purchase/participants");
 });
 
 
@@ -234,7 +214,7 @@ function openEventModal(event) {
             // 이벤트 디테일 모달에 데이터 채우기
             document.getElementById('eventTitle').value = data.title;
             document.getElementById('eventDescription').value = data.description;
-            document.getElementById('eventStart').value = new Date(data.start_datetime).toISOString().slice(0, 16);
+            document.getElementById('eventStart').value = new Date(data.start_datetime).ISOString().slice(0, 16);
             document.getElementById('eventEnd').value = new Date(data.end_datetime).toISOString().slice(0, 16);
             document.getElementById('eventId').value = data.id;
 
@@ -447,24 +427,6 @@ function addTag(name, color) {
         });
 }
 
-// 태그 색상 수정
-function updateTagColor(tagId, name, newColor) {
-    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, color: newColor }),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('태그 색상이 수정되었습니다!');
-                loadTags();
-            } else {
-                alert('태그 수정에 실패했습니다.');
-            }
-        })
-        .catch(err => console.error('태그 수정 중 에러 발생:', err));
-}
 
 
 function filterEventsByTags() {
@@ -508,128 +470,6 @@ function filterEventsByTags() {
         
 }
 
-
-// 태그 관리용 태그 로드
-function loadTagsForManager() {
-    fetch(`${API_BASE_URL}/api/events/tags`, { method: 'GET' })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(tags => {
-            const tagList = document.getElementById('tagList');
-            tagList.innerHTML = ''; // 기존 태그 목록 초기화
-
-            tags.forEach(tag => {
-                const container = document.createElement('div');
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.marginBottom = '8px';
-
-                // Checkbox 생성
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = tag.name;
-                checkbox.id = `tag-${tag.id}`;
-                checkbox.name = 'tags';
-
-                // Label 생성
-                const label = document.createElement('label');
-                label.htmlFor = `tag-${tag.id}`;
-                label.textContent = tag.name;
-                label.style.marginLeft = '10px';
-
-                // 태그 색상
-                const colorInput = document.createElement('input');
-                colorInput.type = 'color';
-                colorInput.value = tag.color;
-                colorInput.className = 'tag-color-input';
-                colorInput.style.marginLeft = '10px';
-
-                // 수정 버튼
-                const updateButton = document.createElement('button');
-                updateButton.textContent = '수정';
-                updateButton.onclick = () => updateTag(tag.id, tag.name, colorInput.value);
-
-                // 삭제 버튼 생성
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '삭제';
-                deleteButton.style.marginLeft = 'auto';
-                deleteButton.style.backgroundColor = '#ff4d4d';
-                deleteButton.style.color = '#fff';
-                deleteButton.style.border = 'none';
-                deleteButton.style.padding = '5px 10px';
-                deleteButton.style.cursor = 'pointer';
-                deleteButton.style.borderRadius = '5px';
-
-                deleteButton.onclick = () => deleteTag(tag.id);
-
-                container.appendChild(checkbox);
-                container.appendChild(label);
-                container.appendChild(colorInput);
-                container.appendChild(updateButton);
-                container.appendChild(deleteButton);
-                tagList.appendChild(container);
-            });
-        })
-        .catch(error => console.error('태그 로드 실패:', error));
-}
-
-function updateTag(tagId, name, color) {
-    if (!name || !color) {
-        alert('태그 이름과 색상을 모두 입력하세요.');
-        return;
-    }
-
-    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, color }),
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('태그 업데이트 실패');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('태그가 성공적으로 업데이트되었습니다!');
-                loadTagsForManager(); // 태그 목록을 다시 로드합니다.
-            } else {
-                alert('태그 업데이트에 실패했습니다.');
-            }
-        })
-        .catch(error => {
-            console.error('태그 업데이트 중 오류 발생:', error);
-            alert('태그 업데이트 중 오류가 발생했습니다.');
-        });
-}
-
-
-function deleteTag(tagId) {
-    if (!confirm('태그를 삭제하시겠습니까?')) return;
-
-    fetch(`${API_BASE_URL}/api/events/tags/${tagId}`, { method: 'DELETE' })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('태그가 삭제되었습니다.');
-                loadTags(); // 태그 목록 갱신
-                loadTagsForManager(); // 태그 목록을 다시 로드합니다.
-            } else {
-                alert('태그 삭제에 실패했습니다.');
-            }
-        })
-        .catch(error => console.error('태그 삭제 중 에러 발생:', error));
-}
 
 document.getElementById('searchButton').addEventListener('click', function () {
     const query = document.getElementById('searchInput').value.trim();
@@ -678,75 +518,7 @@ document.getElementById('resetButton').addEventListener('click', function () {
     filterEventsByTags(); // 태그 필터 유지하며 다시 로드
 });
 
-/* 고정 이벤트 조정*/
 
-let fixedEventSource = null; // 고정 이벤트 소스
-let isFixedEventsActive = false; // 고정 이벤트 활성화 상태
-
-
-let fixedEvents = {
-    monday: ['6반 체육 2교시', '4반 체육 1교시'],
-    tuesday: [],
-    wednesday: ['4반 과학 1교시'],
-    thursday: ['4반 과학 3교시', '4반 과학 4교시'],
-    friday: [],
-    saturday: [],
-    sunday: []
-};
-
-function generateFixedEvents(startDate, endDate) {
-    const events = [];
-    const currentDate = new Date(startDate);
-  
-    while (currentDate <= new Date(endDate)) {
-      const day = currentDate.getDay(); // 요일 (0: 일요일, 1: 월요일, ...)
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const eventTitles = fixedEvents[dayNames[day]]; // 해당 요일의 이벤트 배열 가져오기
-  
-      if (eventTitles && eventTitles.length > 0) {
-        eventTitles.forEach(title => {
-          events.push({
-            title,
-            start: new Date(currentDate).toISOString(),
-            allDay: true,
-            backgroundColor: '#FFD700', // 이벤트 색상 설정
-            borderColor: '#FFAA00',     // 테두리 색상
-          });
-        });
-      }
-  
-      currentDate.setDate(currentDate.getDate() + 1); // 다음 날로 이동
-    }
-  
-    return events;
-}
-  
-
-function toggleFixedEvents() {
-    const toggle = document.getElementById('toggleFixedEvents').checked;
-    const startDate = document.getElementById('fixedStartDate').value;
-    const endDate = document.getElementById('fixedEndDate').value;
-  
-    if (!startDate || !endDate) {
-      alert('시작일과 종료일을 입력하세요.');
-      document.getElementById('toggleFixedEvents').checked = false;
-      return;
-    }
-  
- 
-    if (toggle) {
-      const fixed = generateFixedEvents(startDate, endDate);
-      fixedEventSource = calendar.addEventSource(fixed);
-      isFixedEventsActive = true;
-      alert('고정 이벤트가 활성화되었습니다.');
-    } else {
-      if (fixedEventSource) {
-        fixedEventSource.remove(); // 기존 이벤트 소스 제거
-      }
-      isFixedEventsActive = false;
-      alert('고정 이벤트가 비활성화되었습니다.');
-    }
-}
 
 
 // 공지 로드
@@ -759,47 +531,6 @@ function loadAnnouncement() {
       })
       .catch((error) => console.error('공지 불러오기 실패:', error));
 }
-
-//공지 저장
-document.getElementById('updateAnnouncementButton').addEventListener('click', function () {
-    const newAnnouncement = document.getElementById('announcementInput').value;
-  
-    fetch(`${API_BASE_URL}/api/events/announcement`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ announcement: newAnnouncement }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          alert('공지 업데이트 성공!');
-          loadAnnouncement(); // 공지를 새로 불러옵니다.
-        } else {
-          alert('공지 업데이트 실패!');
-        }
-      })
-      .catch((error) => console.error('공지 업데이트 중 오류:', error));
-});
-
-// 공지 삭제 버튼 클릭 이벤트
-document.getElementById('deleteAnnouncementButton').addEventListener('click', function () {
-    if (!confirm('정말로 공지를 삭제하시겠습니까?')) return;
-
-    fetch(`${API_BASE_URL}/api/events/announcement`, {
-        method: 'DELETE',
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.success) {
-                alert('공지 삭제 완료!');
-                document.getElementById('announcementInput').value = ''; // 텍스트박스 초기화
-                loadAnnouncement(); // 공지 초기화
-            } else {
-                alert('공지 삭제 실패!');
-            }
-        })
-        .catch((error) => console.error('공지 삭제 중 오류:', error));
-});
 
 
 // 마크다운 변환함수
@@ -856,71 +587,80 @@ function displayReminder(reminder, daysDifference) {
     document.body.appendChild(reminderCard);
 }
 
+/* 고정 이벤트 조정*/
 
-function loadReminderManager() {
-    fetch(`${API_BASE_URL}/api/events`)
-        .then((response) => response.json())
-        .then((events) => {
-            const reminderManager = document.getElementById('reminderManager');
-            reminderManager.innerHTML = ''; // 기존 목록 초기화
+let fixedEventSource = null; // 고정 이벤트 소스
+let isFixedEventsActive = false; // 고정 이벤트 활성화 상태
 
-            events.forEach((event) => {
-                const container = document.createElement('div');
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.marginBottom = '10px';
 
-                // 리마인더 체크박스
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = event.reminder_enabled; // 리마인더 상태 반영]
-                
-                checkbox.id = `reminder-${event.id}`;
+let fixedEvents = {
+    monday: ['6반 체육 2교시', '4반 체육 1교시'],
+    tuesday: [],
+    wednesday: ['4반 과학 1교시'],
+    thursday: ['4반 과학 3교시', '4반 과학 4교시'],
+    friday: [],
+    saturday: [],
+    sunday: []
+};
 
-                // 이벤트 제목
-                const label = document.createElement('label');
-                label.htmlFor = `reminder-${event.id}`;
-                label.textContent = event.title;
-                label.style.marginLeft = '10px';
-
-                container.appendChild(checkbox);
-                container.appendChild(label);
-                reminderManager.appendChild(container);
-            });
-        })
-        .catch((error) => console.error('리마인더 관리자 로드 실패:', error));
+function generateFixedEvents(startDate, endDate) {
+    const events = [];
+    const currentDate = new Date(startDate);
+  
+    while (currentDate <= new Date(endDate)) {
+      const day = currentDate.getDay(); // 요일 (0: 일요일, 1: 월요일, ...)
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const eventTitles = fixedEvents[dayNames[day]]; // 해당 요일의 이벤트 배열 가져오기
+  
+      if (eventTitles && eventTitles.length > 0) {
+        eventTitles.forEach(title => {
+          events.push({
+            title,
+            start: new Date(currentDate).toISOString(),
+            allDay: true,
+            backgroundColor: '#FFD700', // 이벤트 색상 설정
+            borderColor: '#FFAA00',     // 테두리 색상
+          });
+        });
+      }
+  
+      currentDate.setDate(currentDate.getDate() + 1); // 다음 날로 이동
+    }
+  
+    return events;
 }
 
-// 저장 버튼 이벤트
-document.getElementById('saveReminderSettings').addEventListener('click', () => {
-    const reminders = Array.from(document.querySelectorAll('#reminderManager div')).map((div) => {
-        const id = div.querySelector('input[type="checkbox"]').id.split('-')[1]; // 이벤트 ID
-        const reminderEnabled = div.querySelector('input[type="checkbox"]').checked; // 체크 상태
 
-        return { id, reminder_enabled: reminderEnabled };
-    });
+//토글형 학급별 시간표
+function toggleFixedEvents() {
+    const toggle = document.getElementById('toggleFixedEvents').checked;
+    const startDate = document.getElementById('fixedStartDate').value;
+    const endDate = document.getElementById('fixedEndDate').value;
+  
+    if (!startDate || !endDate) {
+      alert('시작일과 종료일을 입력하세요.');
+      document.getElementById('toggleFixedEvents').checked = false;
+      return;
+    }
+  
+ 
+    if (toggle) {
+      const fixed = generateFixedEvents(startDate, endDate);
+      fixedEventSource = calendar.addEventSource(fixed);
+      isFixedEventsActive = true;
+      alert('고정 이벤트가 활성화되었습니다.');
+    } else {
+      if (fixedEventSource) {
+        fixedEventSource.remove(); // 기존 이벤트 소스 제거
+      }
+      isFixedEventsActive = false;
+      alert('고정 이벤트가 비활성화되었습니다.');
+    }
+}
 
-    // 리마인더 설정 업데이트 요청
-    Promise.all(
-        reminders.map((reminder) =>
-            fetch(`${API_BASE_URL}/api/events/reminder/${reminder.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reminder_enabled: reminder.reminder_enabled }),
-            })            
-        )
-    )
-        .then(() => {            
-            alert('리마인더 설정이 저장되었습니다.');
-        })
-        .catch((error) => {
-            console.error('리마인더 저장 실패:', error);
-            alert('리마인더 저장 중 오류가 발생했습니다.');
-        });
-});
 
 
-
+/*
 function loadManagerPage(pagename, divname,jsname=""){
     fetch(`${pagename}.html`)  // AJAX 요청
     .then(response => {
@@ -938,3 +678,4 @@ function loadManagerPage(pagename, divname,jsname=""){
     .catch(error => console.error('Error loading manager page:', error));
 }
 
+*/

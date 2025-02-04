@@ -4,20 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>취합 매니저</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-    <h2>취합 사유 관리</h2>
-    <input type="text" id="requestTitle" placeholder="취합 사유 입력">
-    <button onclick="addRequest()">추가</button>
-    <ul id="requestList"></ul>
+    <div id="manager-page" class="page">
+        <h1>태그 관리</h1>
+        <div id="tagManager">
+          <div id="tagList"></div>
+          <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요">
+          <input type="color" id="tagColorInput" value="#FFFFFF" />
+          <button onclick="addTag(document.getElementById('tagNameInput').value, document.getElementById('tagColorInput').value)">추가</button>
+        </div>
+        
+    
+        <h2>공지 관리</h2>
+        <textarea id="announcementInput" placeholder="마크다운으로 공지를 입력하세요..." rows="4" style="width: 100%; margin-top: 10px;"></textarea>
+        <button id="updateAnnouncementButton" style="margin-top: 10px;">공지 업데이트</button>
+        <button id="deleteAnnouncementButton" style="background-color: red; color: white;">삭제</button>
+    
+        <h2>리마인더 관리</h2>
+        <div id="reminderManager" style="overflow-y: scroll; max-height: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+          <!-- 전체 이벤트와 리마인더 상태가 동적으로 추가됩니다 -->
+        </div>
+        <button id="saveReminderSettings" style="margin-top: 10px; padding: 8px 12px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          저장
+        </button>
+    
+        <h2>취합 사유 관리</h2>
+        <input type="text" id="requestTitle" placeholder="취합 사유 입력">
+        <input type="number" id="requestTotalAmount" placeholder="총액 입력"> <!-- 🔥 추가 -->
+        <button onclick="addRequest()">추가</button>
+        <ul id="requestList"></ul>
 
-    <h2>취합 대상자 관리</h2>
-    <select id="requestSelect"></select>
-    <input type="text" id="participantName" placeholder="대상자 입력">
-    <button onclick="addParticipant()">추가</button>
-    <ul id="participantList"></ul>
-
-    <script src="manager.js"></script>
+        <h2>취합 대상자 관리</h2>
+        <select id="requestSelect"></select>
+        <input type="text" id="participantName" placeholder="대상자 입력">
+        <button onclick="addParticipant()">추가</button>
+        <ul id="participantList"></ul>
+      </div>
+      <script src="manager.js"></script>
 </body>
 </html>

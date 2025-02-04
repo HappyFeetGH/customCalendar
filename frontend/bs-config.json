@@ -1,7 +1,10 @@
 {
     "server": {
-      "baseDir": "./public"
+      "baseDir": "./public",
+      "index": "index.html"
     },
-    "open": false
+    "open": false,
+    "files": ["index.html", "manager.html", "purchase.html", "styles.css", "calendar.js", "manager.js", "purchase.js", "purchase.js"]
+
   }
   
