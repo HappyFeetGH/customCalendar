@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000"
+const API_BASE_URL = "http://144.24.69.30:5000"
 
 // 🔹 3. 취합 사유 불러오기
 function loadRequestsDetail() {
