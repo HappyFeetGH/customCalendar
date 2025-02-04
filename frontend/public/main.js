@@ -416,7 +416,6 @@ function addTag(name, color) {
         .then(data => {
             if (data.success) {
                 alert('태그가 추가되었습니다!');
-                loadTags(); // 태그 목록을 다시 불러옵니다.
             } else {
                 alert('태그 추가에 실패했습니다.');
             }
