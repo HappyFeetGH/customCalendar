@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물품 취합</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>물품 취합</h2>
+
+        <!-- 취합 사유 & 대상자 선택 -->
+        <div class="form-group">
+            <label for="requestSelectDetail">취합 사유</label>
+            <select id="requestSelectDetail">
+                <option value="">사유 선택</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="participantSelect">취합 대상자</label>
+            <select id="participantSelect" disabled>
+                <option value="">대상 선택</option>
+            </select>
+        </div>
+
+        <div id="itemForm" style="display: none;"></div>
+
+        
+        <!--<h3>추가된 품목</h3>
+        <div id="itemContainer">
+            <ul id="itemList"></ul>
+        </div>-->
+
+        <!-- 물품 입력 테이블 -->
+        <table id="itemTable">
+            <thead>
+                <tr>
+                    <th>물품 이름</th>
+                    <th>규격</th>
+                    <th>개수</th>
+                    <th>단가</th>
+                    <th>비고(구입처)</th>
+                    <th>택배비</th>
+                    <th>총액</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 기존 물품 목록 행 + 새 행(추가) -->
+            </tbody>
+        </table>
+
+        
+
+
+        <!-- 종합 정보 -->
+        <div id="summary">
+            <h3>종합 정보</h3>
+            <p><strong>총 합계:</strong> <span id="totalAmount">0원</span></p>
+        </div>
+
+        <!-- 취합 사유별 전체 물품 -->
+        <h3>취합 사유별 전체 물품</h3>    
+        <table id="summaryTable">
+            <thead>
+                <tr>
+                    <th>물품명</th>
+                    <th>규격</th>
+                    <th>단가</th>
+                    <th>총 개수</th>
+                    <th>비고</th>
+                    <th>총액</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 동적으로 데이터가 추가됨 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="participants.js"></script>
+</body>
+</html>
