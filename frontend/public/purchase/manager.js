@@ -588,10 +588,58 @@ function convertToKoreanNumber(num) {
     return result.trim() + "원";
 }
 
+// 고정 이벤트 불러오기
+function loadFixedEvents() {
+    fetch(`${API_BASE_URL}/api/events/fixedEvents`)
+        .then(response => response.json())
+        .then(events => {
+            const list = document.getElementById("fixedEventList");
+            list.innerHTML = "";
+
+            events.forEach(event => {
+                const li = document.createElement("li");
+                li.innerHTML = `${event.day_of_week.toUpperCase()} - ${event.event_title}`;
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "삭제";
+                deleteBtn.onclick = () => deleteFixedEvent(event.id);
+
+                li.appendChild(deleteBtn);
+                list.appendChild(li);
+            });
+        })
+        .catch(error => console.error("고정 이벤트 로드 실패:", error));
+}
+
+// 고정 이벤트 추가
+function addFixedEvent() {
+    const day = document.getElementById("fixedEventDay").value;
+    const title = document.getElementById("fixedEventTitle").value;
+    const color = document.getElementById("fixedEventColor").value;
+
+    fetch(`${API_BASE_URL}/api/events/fixedEvents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ day_of_week: day, event_title: title, background_color: color })
+    }).then(() => {
+        loadFixedEvents();
+        document.getElementById("fixedEventTitle").value = "";
+    });
+}
+
+// 고정 이벤트 삭제
+function deleteFixedEvent(id) {
+    fetch(`${API_BASE_URL}/api/events/fixedEvents/${id}`, {
+        method: "DELETE"
+    }).then(() => loadFixedEvents());
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
     loadTagsForManager();
     loadReminderManager();
     loadRequests();
+    loadFixedEvents();
 });
 
 document.body.addEventListener("change", function (event) {
