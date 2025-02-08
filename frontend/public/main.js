@@ -322,6 +322,9 @@ function loadTags(eventId = null, selectedTags = []) {
             return response.json();
         })
         .then(tags => {
+            // 🔹 order_index 기준으로 태그 정렬 (모든 곳에 동일하게 적용)
+            tags.sort((a, b) => a.order_index - b.order_index);
+
             // 이벤트 추가 모달 태그
             const eventTagsAdd = document.getElementById('eventTags');
             if (eventTagsAdd && !eventId) {
