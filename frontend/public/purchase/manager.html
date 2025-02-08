@@ -41,6 +41,33 @@
         <input type="text" id="participantName" placeholder="대상자 입력">
         <button onclick="addParticipant()">추가</button>
         <ul id="participantList"></ul>
+
+        <h2>고정 이벤트 관리</h2>
+
+        <!-- 고정 이벤트 추가 폼 -->
+        <label>요일:</label>
+        <select id="fixedEventDay">
+            <option value="monday">월요일</option>
+            <option value="tuesday">화요일</option>
+            <option value="wednesday">수요일</option>
+            <option value="thursday">목요일</option>
+            <option value="friday">금요일</option>
+            <option value="saturday">토요일</option>
+            <option value="sunday">일요일</option>
+        </select>
+
+        <label>이벤트명:</label>
+        <input type="text" id="fixedEventTitle" placeholder="이벤트 이름 입력">
+
+        <label>색상:</label>
+        <input type="color" id="fixedEventColor" value="#FFD700">
+
+        <button onclick="addFixedEvent()">추가</button>
+
+        <!-- 고정 이벤트 목록 -->
+        <h3>등록된 고정 이벤트</h3>
+        <ul id="fixedEventList"></ul>
+
       </div>
       <script src="manager.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
