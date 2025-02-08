@@ -493,6 +493,39 @@ router.put('/reminder/:id', (req, res) => {
     });
 });
 
+// 모든 고정 이벤트 가져오기
+router.get('/fixedEvents', (req, res) => {
+    const query = 'SELECT * FROM FixedEvents ORDER BY FIELD(day_of_week, "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")';
+    pool.query(query, (err, results) => {
+        if (err) return res.status(500).json({ success: false, message: '고정 이벤트 불러오기 실패' });
+        res.json(results);
+    });
+});
+
+// 새로운 고정 이벤트 추가
+router.post('/fixedEvents', (req, res) => {
+    const { day_of_week, event_title, background_color, border_color } = req.body;
+    if (!day_of_week || !event_title) {
+        return res.status(400).json({ success: false, message: '요일과 이벤트 제목을 입력하세요.' });
+    }
+
+    const query = 'INSERT INTO FixedEvents (day_of_week, event_title, background_color, border_color) VALUES (?, ?, ?, ?)';
+    pool.query(query, [day_of_week, event_title, background_color || '#FFD700', border_color || '#FFAA00'], (err, result) => {
+        if (err) return res.status(500).json({ success: false, message: '고정 이벤트 추가 실패' });
+        res.json({ success: true, id: result.insertId });
+    });
+});
+
+//고정 이벤트 삭제
+router.delete('/fixedEvents/:id', (req, res) => {
+    const { id } = req.params;
+    const query = 'DELETE FROM FixedEvents WHERE id = ?';
+    pool.query(query, [id], (err, result) => {
+        if (err) return res.status(500).json({ success: false, message: '고정 이벤트 삭제 실패' });
+        res.json({ success: true });
+    });
+});
+
 
 
 function getPeriodFromTime(time) {
