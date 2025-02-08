@@ -21,7 +21,6 @@ function addTag(name, color) {
         .then(data => {
             if (data.success) {
                 alert('태그가 추가되었습니다!');
-                loadTags(); // 태그 목록을 다시 불러옵니다.
             } else {
                 alert('태그 추가에 실패했습니다.');
             }
@@ -45,60 +44,70 @@ function loadTagsForManager() {
             const tagList = document.getElementById('tagList');
             tagList.innerHTML = ''; // 기존 태그 목록 초기화
 
+            tags.sort((a, b) => a.order_index - b.order_index); // ✅ order_index 기준 정렬
+
             tags.forEach(tag => {
-                const container = document.createElement('div');
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.marginBottom = '8px';
-
-                // Checkbox 생성
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = tag.name;
-                checkbox.id = `tag-${tag.id}`;
-                checkbox.name = 'tags';
-
-                // Label 생성
-                const label = document.createElement('label');
-                label.htmlFor = `tag-${tag.id}`;
-                label.textContent = tag.name;
-                label.style.marginLeft = '10px';
-
-                // 태그 색상
-                const colorInput = document.createElement('input');
-                colorInput.type = 'color';
-                colorInput.value = tag.color;
-                colorInput.className = 'tag-color-input';
-                colorInput.style.marginLeft = '10px';
-
-                // 수정 버튼
-                const updateButton = document.createElement('button');
-                updateButton.textContent = '수정';
-                updateButton.onclick = () => updateTag(tag.id, tag.name, colorInput.value);
-
-                // 삭제 버튼 생성
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '삭제';
-                deleteButton.style.marginLeft = 'auto';
-                deleteButton.style.backgroundColor = '#ff4d4d';
-                deleteButton.style.color = '#fff';
-                deleteButton.style.border = 'none';
-                deleteButton.style.padding = '5px 10px';
-                deleteButton.style.cursor = 'pointer';
-                deleteButton.style.borderRadius = '5px';
-
-                deleteButton.onclick = () => deleteTag(tag.id);
-
-                container.appendChild(checkbox);
-                container.appendChild(label);
-                container.appendChild(colorInput);
-                container.appendChild(updateButton);
-                container.appendChild(deleteButton);
-                tagList.appendChild(container);
+                const li = document.createElement('li');
+                li.className = "tag-item";
+                li.dataset.id = tag.id;
+                li.innerHTML = `
+                    <span class="tag-name">${tag.name}</span>
+                    <input type="color" value="${tag.color}" class="tag-color-input">
+                    <button onclick="updateTag(${tag.id}, '${tag.name}', this.previousElementSibling.value)">수정</button>
+                    <button onclick="deleteTag(${tag.id})" class="delete-btn">삭제</button>
+                `;
+                tagList.appendChild(li);
             });
+
+            // ✅ 드래그 기능 활성화
+            enableDragAndDrop();
+
         })
         .catch(error => console.error('태그 로드 실패:', error));
 }
+
+//drag n drop
+function enableDragAndDrop() {
+    new Sortable(document.getElementById('tagList'), {
+        animation: 150,  // 부드러운 이동 효과
+        ghostClass: 'dragging', // 드래그 중인 요소 스타일 추가
+        onEnd: function (evt) {
+            updateTagOrder(); // 순서 변경 시 서버에 업데이트
+        }
+    });
+}
+
+//변경된 순서를 서버에 저장
+function updateTagOrder() {
+    const tagList = document.querySelectorAll('#tagList .tag-item');
+    const updatedTags = [];
+
+    tagList.forEach((li, index) => {
+        const tagId = parseInt(li.dataset.id, 10); // ✅ 숫자로 변환
+        if (!isNaN(tagId)) {
+            updatedTags.push({ id: tagId, order_index: index + 1 });
+        } else {
+            console.error("🚨 잘못된 ID 값:", li.dataset.id);
+        }
+    });
+
+    fetch(`${API_BASE_URL}/api/events/tags/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTags)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ 태그 순서가 업데이트되었습니다.');
+        } else {
+            console.error('태그 순서 업데이트 실패:', data.message);
+        }
+    })
+    .catch(error => console.error('태그 순서 저장 중 오류 발생:', error));
+}
+
+
 
 function updateTag(tagId, name, color) {
     if (!name || !color) {
