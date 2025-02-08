@@ -595,7 +595,6 @@ function displayReminder(reminder, daysDifference) {
 }
 
 /* 고정 이벤트 조정*/
-
 let fixedEventSource = null; // 고정 이벤트 소스
 let isFixedEventsActive = false; // 고정 이벤트 활성화 상태
 
@@ -610,61 +609,64 @@ let fixedEvents = {
     sunday: []
 };
 
-function generateFixedEvents(startDate, endDate) {
-    const events = [];
-    const currentDate = new Date(startDate);
-  
-    while (currentDate <= new Date(endDate)) {
-      const day = currentDate.getDay(); // 요일 (0: 일요일, 1: 월요일, ...)
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const eventTitles = fixedEvents[dayNames[day]]; // 해당 요일의 이벤트 배열 가져오기
-  
-      if (eventTitles && eventTitles.length > 0) {
-        eventTitles.forEach(title => {
-          events.push({
-            title,
-            start: new Date(currentDate).toISOString(),
-            allDay: true,
-            backgroundColor: '#FFD700', // 이벤트 색상 설정
-            borderColor: '#FFAA00',     // 테두리 색상
-          });
-        });
-      }
-  
-      currentDate.setDate(currentDate.getDate() + 1); // 다음 날로 이동
+async function generateFixedEvents(startDate, endDate) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/events/fixedEvents`);
+        const fixedEvents = await response.json();
+
+        const events = [];
+        const currentDate = new Date(startDate);
+
+        while (currentDate <= new Date(endDate)) {
+            const day = currentDate.getDay(); // 요일 (0: 일요일, 1: 월요일, ...)
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const filteredEvents = fixedEvents.filter(event => event.day_of_week === dayNames[day]);
+
+            filteredEvents.forEach(event => {
+                events.push({
+                    title: event.event_title,
+                    start: new Date(currentDate).toISOString(),
+                    allDay: true,
+                    backgroundColor: event.background_color || '#FFD700',
+                    borderColor: event.border_color || '#FFAA00',
+                });
+            });
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return events;
+    } catch (error) {
+        console.error("고정 이벤트 로드 실패:", error);
+        return [];
     }
-  
-    return events;
 }
+
 
 
 //토글형 학급별 시간표
-function toggleFixedEvents() {
+async function toggleFixedEvents() {
     const toggle = document.getElementById('toggleFixedEvents').checked;
     const startDate = document.getElementById('fixedStartDate').value;
     const endDate = document.getElementById('fixedEndDate').value;
-  
+
     if (!startDate || !endDate) {
-      alert('시작일과 종료일을 입력하세요.');
-      document.getElementById('toggleFixedEvents').checked = false;
-      return;
+        alert('시작일과 종료일을 입력하세요.');
+        document.getElementById('toggleFixedEvents').checked = false;
+        return;
     }
-  
- 
+
     if (toggle) {
-      const fixed = generateFixedEvents(startDate, endDate);
-      fixedEventSource = calendar.addEventSource(fixed);
-      isFixedEventsActive = true;
-      alert('고정 이벤트가 활성화되었습니다.');
+        const fixed = await generateFixedEvents(startDate, endDate);
+        fixedEventSource = calendar.addEventSource(fixed);
+        isFixedEventsActive = true;
+        alert('고정 이벤트가 활성화되었습니다.');
     } else {
-      if (fixedEventSource) {
-        fixedEventSource.remove(); // 기존 이벤트 소스 제거
-      }
-      isFixedEventsActive = false;
-      alert('고정 이벤트가 비활성화되었습니다.');
+        if (fixedEventSource) fixedEventSource.remove();
+        isFixedEventsActive = false;
+        alert('고정 이벤트가 비활성화되었습니다.');
     }
 }
-
 
 
 /*
