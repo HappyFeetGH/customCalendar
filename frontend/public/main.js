@@ -373,6 +373,10 @@ function loadTags(eventId = null, selectedTags = []) {
             const tagFilter = document.getElementById('tagFilter');
             if (tagFilter) {
                 tagFilter.innerHTML = ''; // 기존 체크박스 제거
+                
+                // 🔹 order_index 기준으로 태그 정렬
+                tags.sort((a, b) => a.order_index - b.order_index)
+
                 tags.forEach(tag => {
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
@@ -416,6 +420,7 @@ function addTag(name, color) {
         .then(data => {
             if (data.success) {
                 alert('태그가 추가되었습니다!');
+                loadTags(); // 태그 목록을 다시 불러옵니다.
             } else {
                 alert('태그 추가에 실패했습니다.');
             }
