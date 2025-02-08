@@ -338,7 +338,7 @@ router.delete('/tags/:id', (req, res) => {
 });
 
 // 태그 색상 변경 API
-router.put('/tags/:id', (req, res) => {
+router.put('/tags/:id(\\d+)', (req, res) => {
     const { id } = req.params;
     const { name, color } = req.body;
 
@@ -352,6 +352,33 @@ router.put('/tags/:id', (req, res) => {
     });
 });
 
+// 태그 순서 저장 
+router.put('/tags/reorder', (req, res) => {
+    const updatedTags = req.body;
+    if (!Array.isArray(updatedTags)) {
+        return res.status(400).json({ success: false, message: "잘못된 요청 데이터" });
+    }
+
+    const queries = updatedTags.map(tag => {
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(tag.order_index) || !Number.isInteger(tag.id)) {
+                console.error("🚨 잘못된 데이터:", tag);
+                reject(new Error("order_index 또는 id가 정수가 아닙니다."));
+                return;
+            }
+
+            const query = `UPDATE Tags SET order_index = ? WHERE id = ?`;
+            pool.query(query, [tag.order_index, tag.id], (err, result) => {
+                if (err) reject(err);
+                resolve(result);
+            });
+        });
+    });
+
+    Promise.all(queries)
+        .then(() => res.json({ success: true }))
+        .catch(err => res.status(500).json({ success: false, message: '순서 업데이트 실패', error: err }));
+});
 
 // 검색 API
 router.get('/search', (req, res) => {
