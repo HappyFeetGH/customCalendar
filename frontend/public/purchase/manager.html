@@ -10,7 +10,7 @@
     <div id="manager-page" class="page">
         <h1>태그 관리</h1>
         <div id="tagManager">
-          <div id="tagList"></div>
+          <ul id="tagList" class="sortable"></ul>
           <input type="text" id="tagNameInput" placeholder="태그 이름을 입력하세요">
           <input type="color" id="tagColorInput" value="#FFFFFF" />
           <button onclick="addTag(document.getElementById('tagNameInput').value, document.getElementById('tagColorInput').value)">추가</button>
@@ -43,5 +43,7 @@
         <ul id="participantList"></ul>
       </div>
       <script src="manager.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
 </body>
 </html>
