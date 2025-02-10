@@ -509,6 +509,152 @@ function updateSummary() {
     document.getElementById("totalAmount").textContent = `${formattedPrice}원 (${koreanPrice})`;
 }
 
+function exportItemTableToXLSX() {
+    exportTableToXLS("itemTable");
+}
+
+function exportSummaryTableToXLSX() {
+    exportSummaryToXLS(document.getElementById('requestSelectDetail').value);
+}
+
+
+// xlsx 다운로드 중 ',' 제거
+function cleanData(text) {
+    if (!text) return ""; // 빈 값 처리
+    return `"${text.replace(/"/g, '""').replace(/,/g, '')}"`; // 큰따옴표 처리 & 쉼표 제거
+}
+
+// xlsx 다운로드
+function exportTableToXLS(tableId) {
+    let table = document.getElementById(tableId);
+    let rows = table.querySelectorAll("tr");
+
+    let content = [];
+
+    // 헤더 가져오기 (마지막 "작업" 열 제외)
+    let header = [];
+    let headers = rows[0].querySelectorAll("th");
+    for (let j = 0; j < headers.length - 1; j++) { // 🔥 마지막 열 제외
+        header.push(cleanData(headers[j].textContent.trim()));
+    }
+    content.push(header.join(",")); // 🔹 쉼표(,)로 구분
+
+    
+    // 데이터 행 가져오기
+    for (let i = 1; i < rows.length; i++) {
+        let row = [];
+        let cells = rows[i].querySelectorAll("td");
+
+        for (let j = 0; j < cells.length - 1; j++) { // 🔥 마지막 "작업" 열 제외
+            let cell = cells[j];
+            let input = cell.querySelector("input");
+            let value = input ? input.value : cell.textContent.trim();
+            row.push(cleanData(value));
+        }
+        content.push(row.join(",")); // 🔹 쉼표(,)로 구분
+    }
+
+    
+    // XLS 파일 생성 (BOM 추가)
+    let blob = new Blob(["\uFEFF" + content.join("\n")], { type: "application/vnd.ms-excel" });
+
+    // 다운로드 링크 생성
+    let selectedElement = document.getElementById('participantSelect');
+    let selectedIndex = selectedElement.selectedIndex;
+    let selectedText = selectedElement.options[selectedIndex].text;
+
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${selectedText}.xls`;
+    link.click();
+}
+
+async function exportSummaryToXLS(requestId) {
+    if (!requestId) {
+        alert("취합 사유를 먼저 선택하세요!");
+        return;
+    }
+
+    let table = document.getElementById("summaryTable");
+    let rows = table.querySelectorAll("tr");
+
+    let content = [];
+
+    // 🔹 헤더 가져오기 (마지막 "작업" 열 제외)
+    let header = [];
+    let headers = rows[0].querySelectorAll("th");
+    for (let j = 0; j < headers.length - 1; j++) { // 🔥 마지막 열 제외
+        header.push(cleanData(headers[j].textContent.trim()));
+    }
+    content.push(header.join(",")); // 🔹 쉼표(,)로 구분
+
+    // 🔹 참가자별 데이터 가져오기
+    let response = await fetch(`${API_BASE_URL}/api/purchase/items/summary/${requestId}`);
+    let allItems = await response.json();
+
+    // 🔹 개별 참가자별 데이터 저장용
+    let participantData = {};
+
+    // 🔹 참가자별 데이터를 itemKey 기준으로 정리
+    allItems.forEach(item => {
+        let itemKey = `${item.item_name}|${item.specification}|${item.unit_price}`;
+        let quantity = parseInt(item.quantity, 10) || 0;
+        let participantName = item.participant_name;
+
+        if (!participantData[itemKey]) {
+            participantData[itemKey] = { total: 0, details: [] };
+        }
+        participantData[itemKey].total += quantity;
+        participantData[itemKey].details.push(`${participantName}: ${quantity}`);
+    });
+
+    // 🔹 Summary Table 업데이트
+    for (let i = 1; i < rows.length; i++) {
+        let row = [];
+        let cells = rows[i].querySelectorAll("td");
+
+        let itemKeyParts = []; // 🔹 아이템 키 구성 요소
+        let quantityValue = 0; // 개수 값 저장
+
+        for (let j = 0; j < cells.length - 1; j++) { // 🔥 마지막 "작업" 열 제외
+            let cell = cells[j];
+            let input = cell.querySelector("input");
+            let value = input ? input.value : cell.textContent.trim();
+
+            if (j === 0 || j === 1 || j === 2) { // 물품명, 규격, 단가
+                itemKeyParts.push(value); // 🔹 배열에 저장
+            }
+            if (j === 3) { // 개수 저장
+                quantityValue = parseInt(value, 10) || 0;
+            }
+            row.push(cleanData(value));
+        }
+        
+        let itemKey = itemKeyParts.join("|"); // 🔹 불필요한 `|` 제거된 문자열 생성
+
+        // 🔥 참가자별 개수 정보 추가
+        if (participantData[itemKey]) {
+            let totalQty = participantData[itemKey].total;
+            let participantDetail = participantData[itemKey].details.join(" + ");
+            row[3] = `${totalQty} (${participantDetail})`; // ✅ 개수 정보 추가
+        }
+
+        content.push(row.join(",")); // 🔹 쉼표(,)로 구분
+    }
+
+    // XLS 파일 생성 (BOM 추가)
+    let blob = new Blob(["\uFEFF" + content.join("\n")], { type: "application/vnd.ms-excel" });
+
+    // 다운로드 링크 생성
+    let selectedElement = document.getElementById('requestSelectDetail');
+    let selectedIndex = selectedElement.selectedIndex;
+    let selectedText = selectedElement.options[selectedIndex].text;
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `취합_요약_${selectedText}.xls`;
+    link.click();
+}
+
 document.body.addEventListener("input", function (event) {
     if (event.target.closest("#itemTable tbody")) {
         updateSummary();
