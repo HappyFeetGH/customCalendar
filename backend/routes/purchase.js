@@ -232,5 +232,29 @@ router.get('/summary/:requestId', (req, res) => {
     });
 });
 
+//export 엑셀 데이터 만들기용
+router.get('/items/summary/:requestId', (req, res) => {
+    const { requestId } = req.params;
+
+    const query = `
+        SELECT 
+            pi.item_name, 
+            pi.specification, 
+            pi.unit_price, 
+            pi.quantity, 
+            p.participant_name
+        FROM PurchaseItems pi
+        JOIN PurchaseParticipants p ON pi.participant_id = p.id
+        WHERE p.request_id = ?;
+    `;
+
+    pool.query(query, [requestId], (err, results) => {
+        if (err) {
+            console.error("Summary Data Fetch Error:", err);
+            return res.status(500).json({ success: false, message: "Summary 데이터 로드 실패" });
+        }
+        res.json(results);
+    });
+});
 
 module.exports = router;
