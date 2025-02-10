@@ -16,7 +16,7 @@
             <select id="requestSelectDetail">
                 <option value="">사유 선택</option>
             </select>
-        </div>
+        </div>        
 
         <div class="form-group">
             <label for="participantSelect">취합 대상자</label>
@@ -24,6 +24,7 @@
                 <option value="">대상 선택</option>
             </select>
         </div>
+        <button onclick="exportItemTableToXLSX()">📂 대상자 물품 XLS</button>
 
         <div id="itemForm" style="display: none;"></div>
 
@@ -60,6 +61,8 @@
             <h3>종합 정보</h3>
             <p><strong>총 합계:</strong> <span id="totalAmount">0원</span></p>
         </div>
+
+        <button onclick="exportSummaryTableToXLSX()">📂 전체 물품 XLS</button>
 
         <!-- 취합 사유별 전체 물품 -->
         <h3>취합 사유별 전체 물품</h3>    
