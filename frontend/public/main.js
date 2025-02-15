@@ -561,10 +561,10 @@ function loadReminders() {
             const today = new Date();
 
             reminders.forEach((reminder) => {
-                const endDate = new Date(reminder.end_datetime);
-                const daysDifference = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+                const startDate = new Date(reminder.start_datetime);
+                const daysDifference = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
 
-                displayReminder(reminder, daysDifference);
+                displayReminder(reminder, daysDifference-1);
             });
         })
         .catch((error) => console.error('리마인더 로드 실패:', error));
