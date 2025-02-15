@@ -214,7 +214,7 @@ function openEventModal(event) {
             // 이벤트 디테일 모달에 데이터 채우기
             document.getElementById('eventTitle').value = data.title;
             document.getElementById('eventDescription').value = data.description;
-            document.getElementById('eventStart').value = new Date(data.start_datetime).ISOString().slice(0, 16);
+            document.getElementById('eventStart').value = new Date(data.start_datetime).toISOString().slice(0, 16);
             document.getElementById('eventEnd').value = new Date(data.end_datetime).toISOString().slice(0, 16);
             document.getElementById('eventId').value = data.id;
 
@@ -555,6 +555,7 @@ function loadReminders() {
 
             reminders.forEach((reminder) => {
                 const startDate = new Date(reminder.start_datetime);
+                console.log(startDate);
                 const daysDifference = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
 
                 displayReminder(reminder, daysDifference-1);
