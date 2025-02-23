@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //showPage('calendar');
 
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        locale: 'ko',
         initialView: 'dayGridMonth',
         selectable: true,
         timeZone: 'Asia/Seoul',
