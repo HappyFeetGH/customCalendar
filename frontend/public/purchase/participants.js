@@ -358,11 +358,22 @@ function loadSummaryTable(requestId) {
             items.forEach(item => {
                 const tr = document.createElement("tr");
 
-                ["item_name", "specification", "unit_price", "total_quantity", "note"].forEach(field => {
+                ["item_name", "specification", "unit_price", "total_quantity"].forEach(field => {
                     const td = document.createElement("td");
                     td.textContent = item[field] || "";
                     tr.appendChild(td);
                 });
+
+                // 비고 셀
+                const noteTd = document.createElement("td");
+                const noteContent = item.note || "";
+                
+                if (isValidUrl(noteContent)) {
+                    noteTd.innerHTML = `<a href="${noteContent}" target="_blank" class="note-link">${noteContent}</a>`;
+                } else {
+                    noteTd.textContent = noteContent;
+                }
+                tr.appendChild(noteTd);
 
                 // 🔹 총액 계산
                 const totalAmount = item.total_quantity * item.unit_price;
@@ -386,6 +397,12 @@ function loadSummaryTable(requestId) {
             });
         })
         .catch(error => console.error("취합 사유별 전체 물품 로드 실패:", error));
+}
+
+// url 유효확인
+function isValidUrl(str) {
+    try { new URL(str); return true; } 
+    catch { return false; }
 }
 
 //복사 버튼 기능
