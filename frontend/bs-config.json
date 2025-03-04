@@ -3,7 +3,7 @@
   "server": {
     "baseDir": "./public",
     "index": "index.html",
-    "host": "0.0.0.0"
+    "host": "localhost"
   },
   "open": false,
   "files": ["index.html", "manager.html", "purchase.html", "styles.css", "calendar.js", "manager.js", "purchase.js", "purchase.js"],
@@ -16,7 +16,7 @@
   },
   "logLevel": "silent",
   "socket": {
-    "domain": "http://144.24.69.30:3036",
+    "domain": "localhost:3036",
     "clients": {
       "heartbeatTimeout": 60000
     }
