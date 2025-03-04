@@ -6,5 +6,19 @@
     "host": "0.0.0.0"
   },
   "open": false,
-  "files": ["index.html", "manager.html", "purchase.html", "styles.css", "calendar.js", "manager.js", "purchase.js", "purchase.js"]
+  "files": ["index.html", "manager.html", "purchase.html", "styles.css", "calendar.js", "manager.js", "purchase.js", "purchase.js"],
+  "ghostMode": false,
+  "notify": false,
+  "snippetOptions": {
+    "rule": {
+      "match": "^$"
+    }
+  },
+  "logLevel": "silent",
+  "socket": {
+    "domain": "localhost:3000",
+    "clients": {
+      "heartbeatTimeout": 60000
+    }
+  }  
 }
