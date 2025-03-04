@@ -16,7 +16,7 @@
   },
   "logLevel": "silent",
   "socket": {
-    "domain": "localhost:3000",
+    "domain": "http://144.24.69.30:3036",
     "clients": {
       "heartbeatTimeout": 60000
     }
