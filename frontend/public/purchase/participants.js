@@ -527,8 +527,8 @@ function updateSummary() {
     rows.forEach(row => {
         const inputs = row.querySelectorAll("input");
         const quantity = parseInt(inputs[2]?.value, 10) || 0;
-        const unitPrice = parseInt(inputs[3]?.value, 10) || 0;
-        const deliveryFee = parseInt(inputs[5]?.value, 10) || 0;
+        const unitPrice = parseInt(inputs[4]?.value, 10) || 0;
+        const deliveryFee = parseInt(inputs[6]?.value, 10) || 0;
 
         totalAmount += quantity * unitPrice + deliveryFee;
     });
