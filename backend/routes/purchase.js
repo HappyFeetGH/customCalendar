@@ -136,16 +136,16 @@ router.get('/items/:participant_id', (req, res) => {
 
 // 품목 추가
 router.post('/items', (req, res) => {
-    let { participant_id, item_name, specification, quantity, unit_price, delivery_fee, note } = req.body;
+    let { participant_id, item_name, specification, quantity, unit, unit_price, purchase_place, delivery_fee, note } = req.body;
     if (!participant_id || !item_name || !quantity || !unit_price) {
         return res.status(400).json({ success: false, message: '필수 필드가 누락되었습니다.' });
     }
     if (!delivery_fee) {delivery_fee = 0};
     const query = `
-        INSERT INTO PurchaseItems (participant_id, item_name, specification, quantity, unit_price, delivery_fee, note)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO PurchaseItems (participant_id, item_name, specification, quantity, unit, unit_price, purchase_place, delivery_fee, note)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    pool.query(query, [participant_id, item_name, specification, quantity, unit_price, delivery_fee, note], (err, result) => {
+    pool.query(query, [participant_id, item_name, specification, quantity, unit, unit_price, purchase_place, delivery_fee, note], (err, result) => {
         if (err) return res.status(500).json({ success: false, message: '품목 저장 실패' });
         res.json({ success: true, id: result.insertId });
     });
@@ -164,17 +164,17 @@ router.delete('/items/:id', (req, res) => {
 // 🔹 품목 수정 (PUT 요청)
 router.put('/items/:id', (req, res) => {
     const { id } = req.params;
-    let { item_name, specification, quantity, unit_price, note, delivery_fee } = req.body;
+    let { item_name, specification, quantity, unit, unit_price, purchase_place, delivery_fee, note } = req.body;
 
     if(!delivery_fee){delivery_fee=0};
 
     const query = `
         UPDATE PurchaseItems
-        SET item_name = ?, specification = ?, quantity = ?, unit_price = ?, note = ?, delivery_fee = ?
+        SET item_name = ?, specification = ?, quantity = ?, unit=?, unit_price = ?, purchase_place =? , delivery_fee = ?, note  =?
         WHERE id = ?
     `;
 
-    pool.query(query, [item_name, specification, quantity, unit_price, note, delivery_fee, id], (err, result) => {
+    pool.query(query, [item_name, specification, quantity, unit, unit_price, purchase_place, delivery_fee, note, id], (err, result) => {
         if (err) return res.status(500).json({ success: false, message: '품목 수정 실패' });
         res.json({ success: true });
     });
@@ -216,13 +216,21 @@ router.get('/summary/:requestId', (req, res) => {
     const { requestId } = req.params;
 
     const query = `
-        SELECT item_name, specification, unit_price, note, SUM(quantity) as total_quantity
+        SELECT 
+            item_name, 
+            specification, 
+            unit_price, 
+            unit,
+            purchase_place,
+            note,
+            delivery_fee,  -- 🔥 추가된 필드
+            SUM(quantity) as total_quantity
         FROM PurchaseItems
-        INNER JOIN PurchaseParticipants ON PurchaseItems.participant_id = PurchaseParticipants.id
+        INNER JOIN PurchaseParticipants 
+            ON PurchaseItems.participant_id = PurchaseParticipants.id
         WHERE PurchaseParticipants.request_id = ?
-        GROUP BY item_name, specification, unit_price, note
+        GROUP BY item_name, specification, unit_price, unit, purchase_place, note, delivery_fee  -- 🔥 GROUP BY 추가
     `;
-
     pool.query(query, [requestId], (err, results) => {
         if (err) {
             console.error("❌ 물품 집계 조회 오류:", err);

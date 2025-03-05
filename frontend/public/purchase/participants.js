@@ -109,7 +109,7 @@ function createItemRow(item) {
     tr.dataset.itemId = item.id;
 
     // 입력 가능한 필드
-    ["item_name", "specification", "quantity", "unit_price", "note", "delivery_fee"].forEach(field => {
+    ["item_name", "specification", "quantity","unit", "unit_price", "purchase_place", "delivery_fee", "note"].forEach(field => {
         const td = document.createElement("td");
         const input = document.createElement("input");
 
@@ -168,8 +168,8 @@ function updateTotalPrice(tr) {
     }
 
     const quantity = parseInt(inputs[2].value, 10) || 0; // 개수
-    const unitPrice = parseInt(inputs[3].value, 10) || 0; // 단가
-    const deliveryFee = parseInt(inputs[5].value, 10) || 0; // 택배비
+    const unitPrice = parseInt(inputs[4].value, 10) || 0; // 단가
+    const deliveryFee = parseInt(inputs[6].value, 10) || 0; // 택배비
 
     // ✅ 총액 계산
     const totalPrice = quantity * unitPrice + deliveryFee;
@@ -227,13 +227,12 @@ function convertToKoreanNumber(num) {
 }
 
 // 🔹 6. 새 물품 추가 행 생성
-// 🔹 6. 새 물품 추가 행 생성
 function createNewItemRow() {
     const tr = document.createElement("tr");
     tr.dataset.itemId = "new";
 
     // 필드 배열 정의
-    const fields = ["item_name", "specification", "quantity", "unit_price", "note", "delivery_fee"];
+    const fields = ["item_name", "specification", "quantity", "unit", "unit_price", "purchase_place", "delivery_fee", "note"];
     
     fields.forEach((field, index) => {
         const td = document.createElement("td");
@@ -284,7 +283,7 @@ function saveInlineEdit(tr) {
     if (itemId === "new") return;
 
     const inputs = tr.querySelectorAll("input");
-    const fields = ["item_name", "specification", "quantity", "unit_price", "note", "delivery_fee"];
+    const fields = ["item_name", "specification", "quantity", "unit", "unit_price", "purchase_place", "delivery_fee", "note"];
 
     const itemData = {};
     inputs.forEach((input, index) => {
@@ -306,7 +305,7 @@ function saveInlineEdit(tr) {
 function addNewItem(tr) {
     const participantId = document.getElementById("participantSelect").value;
     const inputs = tr.querySelectorAll("input");
-    const fields = ["item_name", "specification", "quantity", "unit_price", "note", "delivery_fee"];
+    const fields = ["item_name", "specification", "quantity", "unit", "unit_price", "purchase_place", "delivery_fee", "note"];
 
     const newItem = {};
     inputs.forEach((input, index) => {
@@ -358,7 +357,7 @@ function loadSummaryTable(requestId) {
             items.forEach(item => {
                 const tr = document.createElement("tr");
 
-                ["item_name", "specification", "unit_price", "total_quantity"].forEach(field => {
+                ["item_name", "specification", "total_quantity", "unit", "unit_price"].forEach(field => {
                     const td = document.createElement("td");
                     td.textContent = item[field] || "";
                     tr.appendChild(td);
@@ -366,7 +365,7 @@ function loadSummaryTable(requestId) {
 
                 // 비고 셀
                 const noteTd = document.createElement("td");
-                const noteContent = item.note || "";
+                const noteContent = item.purchase_place || "";
                 
                 if (isValidUrl(noteContent)) {
                     noteTd.innerHTML = `<a href="${noteContent}" target="_blank" class="note-link">${noteContent}</a>`;
@@ -374,6 +373,12 @@ function loadSummaryTable(requestId) {
                     noteTd.textContent = noteContent;
                 }
                 tr.appendChild(noteTd);
+
+                ["delivery_fee", "note"].forEach(field => {
+                    const td = document.createElement("td");
+                    td.textContent = item[field] || "";
+                    tr.appendChild(td);
+                });
 
                 // 🔹 총액 계산
                 const totalAmount = item.total_quantity * item.unit_price;
@@ -407,11 +412,19 @@ function isValidUrl(str) {
 
 //복사 버튼 기능
 function copyItemToForm(item) {
+    console.log(item)
     document.querySelector("#new_item_name").value = item.item_name;
     document.querySelector("#new_specification").value = item.specification;
     document.querySelector("#new_quantity").value = item.total_quantity;
+    document.querySelector("#new_unit").value = item.unit || "";          // 단위 추가
     document.querySelector("#new_unit_price").value = item.unit_price;
-    document.querySelector("#new_note").value = item.note || ""; // 🔥 비고 추가
+    document.querySelector("#new_purchase_place").value = item.purchase_place || "";  // 구입처
+    document.querySelector("#new_note").value = item.note || "";          // 비고
+    // 택배비 필드 추가
+    document.querySelector("#new_delivery_fee").value = item.delivery_fee || 0;
+
+    //document.querySelector("#new_unit_price").value = item.unit_price;
+    //document.querySelector("#new_note").value = item.note || ""; // 🔥 비고 추가
 
     updateTotalPrice(document.querySelector("tr[data-item-id='new']")); // ✅ 총액 자동 업데이트
 }
@@ -548,42 +561,60 @@ function exportTableToXLS(tableId) {
 
     let content = [];
 
-    // 헤더 가져오기 (마지막 "작업" 열 제외)
-    let header = [];
-    let headers = rows[0].querySelectorAll("th");
-    for (let j = 0; j < headers.length - 1; j++) { // 🔥 마지막 열 제외
-        header.push(cleanData(headers[j].textContent.trim()));
-    }
-    content.push(header.join(",")); // 🔹 쉼표(,)로 구분
+    const header = [
+        "물품 이름", 
+        "규격", 
+        "개수", 
+        "단위", 
+        "단가", 
+        "구입처", 
+        "비고"
+    ];
+    content.push(header.join(","));
 
-    
-    // 데이터 행 가져오기
+    // 데이터 행 처리
     for (let i = 1; i < rows.length; i++) {
         let row = [];
         let cells = rows[i].querySelectorAll("td");
-
-        for (let j = 0; j < cells.length - 1; j++) { // 🔥 마지막 "작업" 열 제외
-            let cell = cells[j];
+        
+        // 필드 매핑: [0]물품명 [1]규격 [2]개수 [3]단위 [4]단가 [5]구입처 [7]비고
+        const fieldIndices = [0, 1, 2, 3, 4, 5, 7];
+        
+        fieldIndices.forEach(index => {
+            let cell = cells[index];
             let input = cell.querySelector("input");
             let value = input ? input.value : cell.textContent.trim();
+            
+            // 숫자 필드에서 콤마 제거
+            if(index === 2 || index === 4){ // 개수, 단가 필드
+                value = value.replace(/,/g, '');
+            }
+            
             row.push(cleanData(value));
-        }
-        content.push(row.join(",")); // 🔹 쉼표(,)로 구분
+        });
+
+        content.push(row.join(","));
     }
 
+    // 파일 생성
+    let blob = new Blob(["\uFEFF" + content.join("\n")], {
+        type: "application/vnd.ms-excel"
+    });
+
+    // 다운로드 실행
+    let participantSelect = document.getElementById('participantSelect');
+    let selectedText = participantSelect.options[participantSelect.selectedIndex].text;
     
-    // XLS 파일 생성 (BOM 추가)
-    let blob = new Blob(["\uFEFF" + content.join("\n")], { type: "application/vnd.ms-excel" });
-
-    // 다운로드 링크 생성
-    let selectedElement = document.getElementById('participantSelect');
-    let selectedIndex = selectedElement.selectedIndex;
-    let selectedText = selectedElement.options[selectedIndex].text;
-
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${selectedText}.xls`;
+    link.download = `${selectedText}_물품목록_.xls`;
     link.click();
+}
+
+// 데이터 정제 함수
+function cleanData(text) {
+    if (!text) return "";
+    return `"${text.replace(/"/g, '""')}"`;
 }
 
 async function exportSummaryToXLS(requestId) {
@@ -603,6 +634,7 @@ async function exportSummaryToXLS(requestId) {
     for (let j = 0; j < headers.length - 1; j++) { // 🔥 마지막 열 제외
         header.push(cleanData(headers[j].textContent.trim()));
     }
+    header.push("반");
     content.push(header.join(",")); // 🔹 쉼표(,)로 구분
 
     // 🔹 참가자별 데이터 가져오기
@@ -617,9 +649,9 @@ async function exportSummaryToXLS(requestId) {
         let itemKey = `${item.item_name}|${item.specification}|${item.unit_price}`;
         let quantity = parseInt(item.quantity, 10) || 0;
         let participantName = item.participant_name;
-
+        
         if (!participantData[itemKey]) {
-            participantData[itemKey] = { total: 0, details: [] };
+            participantData[itemKey] = { total: 0, details: [] };            
         }
         participantData[itemKey].total += quantity;
         participantData[itemKey].details.push(`${participantName}: ${quantity}`);
@@ -638,10 +670,10 @@ async function exportSummaryToXLS(requestId) {
             let input = cell.querySelector("input");
             let value = input ? input.value : cell.textContent.trim();
 
-            if (j === 0 || j === 1 || j === 2) { // 물품명, 규격, 단가
+            if (j === 0 || j === 1 || j === 4) { // 물품명, 규격, 단가
                 itemKeyParts.push(value); // 🔹 배열에 저장
             }
-            if (j === 3) { // 개수 저장
+            if (j === 2) { // 개수 저장
                 quantityValue = parseInt(value, 10) || 0;
             }
             row.push(cleanData(value));
@@ -653,16 +685,16 @@ async function exportSummaryToXLS(requestId) {
         if (participantData[itemKey]) {
             let totalQty = participantData[itemKey].total;
             let participantDetail = participantData[itemKey].details.join(" + ");
-            row[3] = `${totalQty} (${participantDetail})`; // ✅ 개수 정보 추가
+            row.push(`${totalQty} (${participantDetail})`); // ✅ 개수 정보 추가
         }
-
-        content.push(row.join(",")); // 🔹 쉼표(,)로 구분
+        content.push(row.join(",")); // 🔹 쉼표(,)로 구분        
     }
-
+    
     // XLS 파일 생성 (BOM 추가)
     let blob = new Blob(["\uFEFF" + content.join("\n")], { type: "application/vnd.ms-excel" });
 
     // 다운로드 링크 생성
+    
     let selectedElement = document.getElementById('requestSelectDetail');
     let selectedIndex = selectedElement.selectedIndex;
     let selectedText = selectedElement.options[selectedIndex].text;
